@@ -1,7 +1,7 @@
-import { GameContainerV2 } from './components/GameContainerV2';
+import { GameContainerV3 } from './components/GameContainerV3';
 
 function App() {
-  return <GameContainerV2 />;
+  return <GameContainerV3 />;
 }
 
 export default App;
