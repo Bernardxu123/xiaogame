@@ -249,7 +249,7 @@ export const GameContainerV3: React.FC = () => {
                 >
                     <Rabbit
                         state={getRabbitState()}
-                        isDressed={state.currentOutfit !== 'default'}
+                        equipment={state.equipment}
                     />
                 </motion.div>
             </div>
@@ -327,13 +327,14 @@ export const GameContainerV3: React.FC = () => {
                     <div className="fixed inset-0 z-50">
                         <Wardrobe
                             hearts={state.hearts}
-                            currentOutfit={state.currentOutfit}
-                            currentBackground={state.currentBackground}
-                            unlockedOutfits={state.unlockedOutfits}
+                            unlockedItems={state.unlockedItems}
                             unlockedBackgrounds={state.unlockedBackgrounds}
-                            onEquipOutfit={actions.equipOutfit}
+                            equipment={state.equipment}
+                            currentBackground={state.currentBackground}
+                            onUnlockItem={actions.unlockItem}
+                            onEquipItem={actions.equipItem}
+                            onUnlockBackground={actions.unlockBackground}
                             onSetBackground={actions.setBackground}
-                            onUnlock={actions.unlockItem}
                             onClose={() => setShowWardrobe(false)}
                         />
                     </div>

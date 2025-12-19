@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // Types
-export interface Outfit {
+export interface GameItem {
     id: string;
     name: string;
-    unlocked: boolean;
+    type: 'head' | 'body' | 'hand';
+    cost: number;
+    icon: string;
 }
 
 export interface Background {
@@ -23,14 +25,20 @@ export interface GameState {
     hearts: number;
     level: number;
     totalHeartsEarned: number;
-    currentOutfit: string;
+
+    // Equipment & Inventory
+    equipment: {
+        head?: string;
+        body?: string;
+        hand?: string;
+    };
     currentBackground: string;
-    unlockedOutfits: string[];
-    unlockedBackgrounds: string[];
+    unlockedItems: string[]; // IDs of unlocked items
+    unlockedBackgrounds: string[]; // IDs of unlocked backgrounds
 
     // Timestamps
     lastInteraction: number;
-    lastGiftClaimed: number; // Unix timestamp for daily gift
+    lastGiftClaimed: number; // Unix timestamp
 }
 
 const DEFAULT_STATE: GameState = {
@@ -40,22 +48,23 @@ const DEFAULT_STATE: GameState = {
     hearts: 0,
     level: 1,
     totalHeartsEarned: 0,
-    currentOutfit: 'default',
+    equipment: {},
     currentBackground: 'room',
-    unlockedOutfits: ['default'],
+    unlockedItems: ['default'],
     unlockedBackgrounds: ['room'],
     lastInteraction: Date.now(),
     lastGiftClaimed: 0,
 };
 
-const STORAGE_KEY = 'rabbit-care-kids-v2';
+const STORAGE_KEY = 'rabbit-care-kids-v3';
 
 // All available content
-export const ALL_OUTFITS: Outfit[] = [
-    { id: 'default', name: '默认', unlocked: true },
-    { id: 'pink-dress', name: '粉色裙子', unlocked: false },
-    { id: 'blue-hat', name: '蓝色帽子', unlocked: false },
-    { id: 'star-cape', name: '星星披风', unlocked: false },
+export const ALL_ITEMS: GameItem[] = [
+    { id: 'bow', name: '蝴蝶结', type: 'head', cost: 50, icon: '🎀' },
+    { id: 'hat', name: '礼帽', type: 'head', cost: 80, icon: '🎩' },
+    { id: 'dress', name: '粉裙子', type: 'body', cost: 100, icon: '👗' },
+    { id: 'skirt', name: '蓝短裙', type: 'body', cost: 80, icon: '👘' },
+    { id: 'carrot', name: '胡萝卜', type: 'hand', cost: 30, icon: '🥕' },
 ];
 
 export const ALL_BACKGROUNDS: Background[] = [
@@ -65,7 +74,6 @@ export const ALL_BACKGROUNDS: Background[] = [
 ];
 
 export const UNLOCK_COSTS = {
-    outfit: 50,
     background: 100,
 };
 
@@ -74,6 +82,7 @@ export function useGameState() {
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
+                // Merge with default ensuring new fields exist
                 return { ...DEFAULT_STATE, ...JSON.parse(saved) };
             }
         } catch (e) {
@@ -82,7 +91,7 @@ export function useGameState() {
         return DEFAULT_STATE;
     });
 
-    // Auto-save on state change
+    // Auto-save
     useEffect(() => {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -91,32 +100,29 @@ export function useGameState() {
         }
     }, [state]);
 
-    // Decay stats over time (very slow, kid-friendly)
+    // Decay stats over time
     useEffect(() => {
         const timer = setInterval(() => {
             setState(prev => {
                 const timeSinceLastInteraction = Date.now() - prev.lastInteraction;
-                // Only decay if no interaction for 2 minutes
                 if (timeSinceLastInteraction > 120000) {
                     return {
                         ...prev,
                         hungerLevel: Math.max(0, prev.hungerLevel - 1),
                         cleanLevel: Math.max(0, prev.cleanLevel - 1),
-                        // Happiness decays slower
                         happyLevel: prev.hungerLevel === 0 || prev.cleanLevel === 0
                             ? Math.max(0, prev.happyLevel - 1)
                             : prev.happyLevel,
-                        lastInteraction: Date.now(), // Reset timer after decay
+                        lastInteraction: Date.now(),
                     };
                 }
                 return prev;
             });
-        }, 60000); // Check every minute
-
+        }, 60000);
         return () => clearInterval(timer);
     }, []);
 
-    // Progression Logic: Level Up
+    // Progression Utils
     const getRequiredXP = (lvl: number) => lvl * 100;
 
     const updateProgression = useCallback((amount: number) => {
@@ -124,10 +130,8 @@ export function useGameState() {
             const newHearts = prev.hearts + amount;
             const newTotal = prev.totalHeartsEarned + amount;
 
-            // Calculate level based on total earned
             let currentLvl = prev.level;
             let needed = getRequiredXP(currentLvl);
-
             while (newTotal >= needed) {
                 currentLvl++;
                 needed += getRequiredXP(currentLvl);
@@ -146,40 +150,25 @@ export function useGameState() {
     // Actions
     const feed = useCallback(() => {
         updateProgression(5);
-        setState(prev => ({
-            ...prev,
-            hungerLevel: 2,
-            happyLevel: Math.min(2, prev.happyLevel + 1),
-        }));
+        setState(prev => ({ ...prev, hungerLevel: 2, happyLevel: Math.min(2, prev.happyLevel + 1) }));
     }, [updateProgression]);
 
     const clean = useCallback(() => {
         updateProgression(5);
-        setState(prev => ({
-            ...prev,
-            cleanLevel: 2,
-            happyLevel: Math.min(2, prev.happyLevel + 1),
-        }));
+        setState(prev => ({ ...prev, cleanLevel: 2, happyLevel: Math.min(2, prev.happyLevel + 1) }));
     }, [updateProgression]);
 
     const pet = useCallback(() => {
         updateProgression(3);
-        setState(prev => ({
-            ...prev,
-            happyLevel: 2,
-        }));
+        setState(prev => ({ ...prev, happyLevel: 2 }));
     }, [updateProgression]);
 
-    const earnHearts = useCallback((amount: number) => {
-        updateProgression(amount);
-    }, [updateProgression]);
+    const earnHearts = useCallback((amount: number) => updateProgression(amount), [updateProgression]);
 
     const claimDailyGift = useCallback(() => {
         const now = Date.now();
-        const canClaim = now - state.lastGiftClaimed > 24 * 60 * 60 * 1000;
-
-        if (canClaim) {
-            const giftAmount = 50 + Math.floor(Math.random() * 51); // 50-100 hearts
+        if (now - state.lastGiftClaimed > 24 * 60 * 60 * 1000) {
+            const giftAmount = 50 + Math.floor(Math.random() * 51);
             updateProgression(giftAmount);
             setState(prev => ({ ...prev, lastGiftClaimed: now }));
             return giftAmount;
@@ -187,48 +176,51 @@ export function useGameState() {
         return 0;
     }, [state.lastGiftClaimed, updateProgression]);
 
-    const unlockItem = useCallback((type: 'outfit' | 'background', id: string) => {
-        const cost = type === 'outfit' ? UNLOCK_COSTS.outfit : UNLOCK_COSTS.background;
+    const unlockItem = useCallback((itemId: string) => {
+        const item = ALL_ITEMS.find(i => i.id === itemId);
+        if (!item) return;
 
         setState(prev => {
-            if (prev.hearts < cost) return prev;
-
-            const key = type === 'outfit' ? 'unlockedOutfits' : 'unlockedBackgrounds';
-            if (prev[key].includes(id)) return prev;
-
+            if (prev.hearts < item.cost || prev.unlockedItems.includes(itemId)) return prev;
             return {
                 ...prev,
-                hearts: prev.hearts - cost,
-                [key]: [...prev[key], id],
+                hearts: prev.hearts - item.cost,
+                unlockedItems: [...prev.unlockedItems, itemId],
             };
         });
     }, []);
 
-    const equipOutfit = useCallback((id: string) => {
+    const equipItem = useCallback((itemId: string | null, type: 'head' | 'body' | 'hand') => {
+        setState(prev => ({
+            ...prev,
+            equipment: {
+                ...prev.equipment,
+                [type]: itemId || undefined,
+            }
+        }));
+    }, []);
+
+    const unlockBackground = useCallback((id: string) => {
         setState(prev => {
-            if (!prev.unlockedOutfits.includes(id)) return prev;
-            return { ...prev, currentOutfit: id };
+            if (prev.hearts < UNLOCK_COSTS.background || prev.unlockedBackgrounds.includes(id)) return prev;
+            return {
+                ...prev,
+                hearts: prev.hearts - UNLOCK_COSTS.background,
+                unlockedBackgrounds: [...prev.unlockedBackgrounds, id]
+            };
         });
     }, []);
 
     const setBackground = useCallback((id: string) => {
-        setState(prev => {
-            if (!prev.unlockedBackgrounds.includes(id)) return prev;
-            return { ...prev, currentBackground: id };
-        });
+        setState(prev => ({ ...prev, currentBackground: id }));
     }, []);
 
     return {
         state,
         actions: {
-            feed,
-            clean,
-            pet,
-            earnHearts,
-            claimDailyGift,
-            unlockItem,
-            equipOutfit,
-            setBackground,
+            feed, clean, pet, earnHearts, claimDailyGift,
+            unlockItem, equipItem,
+            unlockBackground, setBackground,
         },
     };
 }
