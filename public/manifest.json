@@ -1,0 +1,16 @@
+{
+    "name": "照顾小兔兔 (Pixel Care)",
+    "short_name": "照顾兔兔",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#2e1065",
+    "theme_color": "#581c87",
+    "description": "Pixel Art Rabbit Care Game",
+    "icons": [
+        {
+            "src": "/src/assets/pixel/rabbit-happy.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
