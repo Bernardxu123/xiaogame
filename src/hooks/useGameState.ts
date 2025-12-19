@@ -21,6 +21,8 @@ export interface GameState {
 
     // Progression
     hearts: number;
+    level: number;
+    totalHeartsEarned: number;
     currentOutfit: string;
     currentBackground: string;
     unlockedOutfits: string[];
@@ -28,6 +30,7 @@ export interface GameState {
 
     // Timestamps
     lastInteraction: number;
+    lastGiftClaimed: number; // Unix timestamp for daily gift
 }
 
 const DEFAULT_STATE: GameState = {
@@ -35,11 +38,14 @@ const DEFAULT_STATE: GameState = {
     cleanLevel: 2,
     happyLevel: 2,
     hearts: 0,
+    level: 1,
+    totalHeartsEarned: 0,
     currentOutfit: 'default',
     currentBackground: 'room',
     unlockedOutfits: ['default'],
     unlockedBackgrounds: ['room'],
     lastInteraction: Date.now(),
+    lastGiftClaimed: 0,
 };
 
 const STORAGE_KEY = 'rabbit-care-kids-v2';
@@ -110,43 +116,76 @@ export function useGameState() {
         return () => clearInterval(timer);
     }, []);
 
+    // Progression Logic: Level Up
+    const getRequiredXP = (lvl: number) => lvl * 100;
+
+    const updateProgression = useCallback((amount: number) => {
+        setState(prev => {
+            const newHearts = prev.hearts + amount;
+            const newTotal = prev.totalHeartsEarned + amount;
+
+            // Calculate level based on total earned
+            let currentLvl = prev.level;
+            let needed = getRequiredXP(currentLvl);
+
+            while (newTotal >= needed) {
+                currentLvl++;
+                needed += getRequiredXP(currentLvl);
+            }
+
+            return {
+                ...prev,
+                hearts: newHearts,
+                totalHeartsEarned: newTotal,
+                level: currentLvl,
+                lastInteraction: Date.now(),
+            };
+        });
+    }, []);
+
     // Actions
     const feed = useCallback(() => {
+        updateProgression(5);
         setState(prev => ({
             ...prev,
             hungerLevel: 2,
             happyLevel: Math.min(2, prev.happyLevel + 1),
-            hearts: prev.hearts + 5,
-            lastInteraction: Date.now(),
         }));
-    }, []);
+    }, [updateProgression]);
 
     const clean = useCallback(() => {
+        updateProgression(5);
         setState(prev => ({
             ...prev,
             cleanLevel: 2,
             happyLevel: Math.min(2, prev.happyLevel + 1),
-            hearts: prev.hearts + 5,
-            lastInteraction: Date.now(),
         }));
-    }, []);
+    }, [updateProgression]);
 
     const pet = useCallback(() => {
+        updateProgression(3);
         setState(prev => ({
             ...prev,
             happyLevel: 2,
-            hearts: prev.hearts + 3,
-            lastInteraction: Date.now(),
         }));
-    }, []);
+    }, [updateProgression]);
 
     const earnHearts = useCallback((amount: number) => {
-        setState(prev => ({
-            ...prev,
-            hearts: prev.hearts + amount,
-            lastInteraction: Date.now(),
-        }));
-    }, []);
+        updateProgression(amount);
+    }, [updateProgression]);
+
+    const claimDailyGift = useCallback(() => {
+        const now = Date.now();
+        const canClaim = now - state.lastGiftClaimed > 24 * 60 * 60 * 1000;
+
+        if (canClaim) {
+            const giftAmount = 50 + Math.floor(Math.random() * 51); // 50-100 hearts
+            updateProgression(giftAmount);
+            setState(prev => ({ ...prev, lastGiftClaimed: now }));
+            return giftAmount;
+        }
+        return 0;
+    }, [state.lastGiftClaimed, updateProgression]);
 
     const unlockItem = useCallback((type: 'outfit' | 'background', id: string) => {
         const cost = type === 'outfit' ? UNLOCK_COSTS.outfit : UNLOCK_COSTS.background;
@@ -186,6 +225,7 @@ export function useGameState() {
             clean,
             pet,
             earnHearts,
+            claimDailyGift,
             unlockItem,
             equipOutfit,
             setBackground,

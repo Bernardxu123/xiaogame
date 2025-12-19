@@ -20,6 +20,23 @@ interface RabbitProps {
 export const Rabbit: React.FC<RabbitProps> = ({ state, isDressed, className }) => {
     // Logic to determine what to render
     const renderContent = () => {
+        // If dressed, we assume the dress image is the full character (as per user feedback)
+        // IMPORTANT: If sleeping or eating, we might still want the specific animations.
+        // However, if the user says "the dress itself has the rabbit", we use the dress image as a replacement for normal/happy/sad states.
+
+        if (isDressed && state !== 'sleeping' && state !== 'eating') {
+            return (
+                <div className="relative w-full h-full">
+                    <img
+                        src={dress}
+                        alt="Dressed Rabbit"
+                        className={`w-full h-full object-contain drop-shadow-2xl ${state === 'happy' ? 'animate-bounce' : 'animate-pulse'}`}
+                        style={{ imageRendering: 'pixelated' }}
+                    />
+                </div>
+            );
+        }
+
         switch (state) {
             case 'eating':
                 return (
@@ -38,7 +55,6 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, isDressed, className }) =
                             className="w-full h-full object-contain drop-shadow-2xl opacity-90"
                             style={{ imageRendering: 'pixelated' }}
                         />
-                        {/* Sleeping ZZZ animation could go here */}
                     </div>
                 );
             default:
@@ -49,23 +65,12 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, isDressed, className }) =
 
                 return (
                     <div className="relative w-full h-full">
-                        {/* Base Rabbit - ALWAYS RENDERED if not eating/sleeping */}
                         <img
                             src={imageSrc}
                             alt="Rabbit"
                             className={`w-full h-full object-contain drop-shadow-2xl ${state === 'happy' ? 'animate-bounce' : 'animate-pulse'}`}
                             style={{ imageRendering: 'pixelated' }}
                         />
-
-                        {/* Dress Overlay - Renders ON TOP of the rabbit */}
-                        {isDressed && (
-                            <img
-                                src={dress}
-                                alt="Dress"
-                                className="absolute inset-0 w-full h-full object-contain z-10"
-                                style={{ imageRendering: 'pixelated', transform: 'scale(1.05) translateY(2%)' }} // Fine-tuned positioning
-                            />
-                        )}
                     </div>
                 );
         }
