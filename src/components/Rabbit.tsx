@@ -31,57 +31,51 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, isDressed, className }) =
                 );
             case 'sleeping':
                 return (
-                    <img
-                        src={rabbitSleep}
-                        alt="Rabbit Sleeping"
-                        className="w-full h-full object-contain drop-shadow-2xl opacity-90"
-                        style={{ imageRendering: 'pixelated' }}
-                    />
+                    <div className="relative w-full h-full">
+                        <img
+                            src={rabbitSleep}
+                            alt="Rabbit Sleeping"
+                            className="w-full h-full object-contain drop-shadow-2xl opacity-90"
+                            style={{ imageRendering: 'pixelated' }}
+                        />
+                        {/* Sleeping ZZZ animation could go here */}
+                    </div>
                 );
-            case 'happy':
+            default:
+                // Normal / Happy / Sad
+                let imageSrc = rabbitIdle;
+                if (state === 'happy') imageSrc = rabbitHappy;
+                if (state === 'sad') imageSrc = rabbitSad;
+
                 return (
-                    <img
-                        src={rabbitHappy}
-                        alt="Rabbit Happy"
-                        className="w-full h-full object-contain drop-shadow-2xl animate-bounce"
-                        style={{ imageRendering: 'pixelated' }}
-                    />
-                );
-            case 'sad':
-                return (
-                    <img
-                        src={rabbitSad}
-                        alt="Rabbit Sad"
-                        className="w-full h-full object-contain drop-shadow-2xl"
-                        style={{ imageRendering: 'pixelated' }}
-                    />
-                );
-            default: // normal
-                return (
-                    <img
-                        src={rabbitIdle}
-                        alt="Rabbit Idle"
-                        className="w-full h-full object-contain drop-shadow-2xl animate-pulse" // Subtle breathing
-                        style={{ imageRendering: 'pixelated' }}
-                    />
+                    <div className="relative w-full h-full">
+                        {/* Base Rabbit - ALWAYS RENDERED if not eating/sleeping */}
+                        <img
+                            src={imageSrc}
+                            alt="Rabbit"
+                            className={`w-full h-full object-contain drop-shadow-2xl ${state === 'happy' ? 'animate-bounce' : 'animate-pulse'}`}
+                            style={{ imageRendering: 'pixelated' }}
+                        />
+
+                        {/* Dress Overlay - Renders ON TOP of the rabbit */}
+                        {isDressed && (
+                            <img
+                                src={dress}
+                                alt="Dress"
+                                className="absolute inset-0 w-full h-full object-contain z-10"
+                                style={{ imageRendering: 'pixelated', transform: 'scale(1.05) translateY(2%)' }} // Fine-tuned positioning
+                            />
+                        )}
+                    </div>
                 );
         }
     };
 
     return (
-        <div className={cn("relative w-96 h-96 flex justify-center items-center transition-transform duration-500", className)}>
-            {/* Rabbit Content */}
+        <div
+            className={cn("w-64 h-64 relative transition-all duration-300", className)}
+        >
             {renderContent()}
-
-            {/* Dress Overlay - Only when not sleeping? Or always? Let's say NOT when sleeping for comfort :D */}
-            {isDressed && state !== 'sleeping' && (
-                <img
-                    src={dress}
-                    alt="Dress"
-                    className="absolute bottom-0 w-[45%] h-[40%] object-contain translate-y-[-15%]"
-                    style={{ imageRendering: 'pixelated' }}
-                />
-            )}
         </div>
     );
 };
