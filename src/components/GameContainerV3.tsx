@@ -7,7 +7,7 @@ import { DressUpStudio } from './DressUpStudio';
 import { FarmGame } from './FarmGame';
 import { PoopSystem } from './PoopSystem';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gamepad2, BrainCircuit, Flower } from 'lucide-react';
+import { Gamepad2, BrainCircuit, Flower, RotateCw } from 'lucide-react';
 
 // Background Assets
 import bgRoom from '../assets/pixel/bg_room.jpg';
@@ -250,11 +250,20 @@ export const GameContainerV3: React.FC = () => {
                 )}
             </AnimatePresence>
 
+            {/* Refresh Button */}
+            <button
+                onClick={() => window.location.reload()}
+                className="absolute top-24 left-4 p-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border-2 border-white/50 text-slate-500 hover:text-blue-500 active:scale-95 transition-all z-40"
+                title="刷新版本"
+            >
+                <RotateCw className="w-6 h-6" />
+            </button>
+
             {/* 2. Main Character Area */}
             <div className="absolute inset-0 flex items-center justify-center pt-10 z-20">
                 {/* Gift Animation Effect */}
                 <AnimatePresence>
-                    {giftEffect && (
+                    {giftEffect !== null && (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.5, y: 0 }}
                             animate={{ opacity: 1, scale: 2, y: -200 }}
@@ -281,53 +290,56 @@ export const GameContainerV3: React.FC = () => {
                     )}
                 </AnimatePresence>
 
-                {/* Rabbit */}
-                <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handlePet}
-                    className="relative cursor-pointer drop-shadow-2xl filter z-10"
-                >
-                    <Rabbit
-                        state={getRabbitState()}
-                        equipment={state.equipment}
-                    />
-                </motion.div>
+                {/* Unified Rabbit and Stickers Container */}
+                <div className="relative w-[28vh] h-[28vh] max-w-2xl max-h-2xl flex items-center justify-center">
+                    {/* Rabbit (Base Layer) */}
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handlePet}
+                        className="absolute inset-0 cursor-pointer drop-shadow-2xl filter z-10 flex items-center justify-center"
+                    >
+                        <Rabbit
+                            state={getRabbitState()}
+                            equipment={state.equipment}
+                            className="w-full h-full"
+                        />
+                    </motion.div>
 
-                {/* Freeform Stickers (Saved Outfits) */}
-                {state.placedItems?.map((item) => {
-                    const path = `../assets/pixel/${item.itemId}${item.itemId.endsWith('.png') ? '' : '.png'}`;
-                    const src = ASSETS[path] || ASSETS[`../assets/pixel/${item.itemId}`];
-                    if (!src) return null;
+                    {/* Freeform Stickers (Saved Outfits) - Layered OVER Rabbit */}
+                    {state.placedItems?.map((item) => {
+                        const path = `../assets/pixel/${item.itemId}${item.itemId.endsWith('.png') ? '' : '.png'}`;
+                        const src = ASSETS[path] || ASSETS[`../assets/pixel/${item.itemId}`];
+                        if (!src) return null;
 
-                    return (
-                        <motion.div
-                            key={item.uiId}
-                            initial={{ opacity: 0, scale: 0 }}
-                            animate={{
-                                opacity: 1,
-                                scale: item.scale,
-                                rotate: item.rotation,
-                                x: '-50%',
-                                y: '-50%',
-                                left: `${item.x}%`,
-                                top: `${item.y}%`,
-                            }}
-                            className="absolute pointer-events-none"
-                            style={{
-                                zIndex: item.zIndex,
-                                position: 'absolute'
-                            }}
-                        >
-                            <img
-                                src={src as string}
-                                alt="sticker"
-                                className="w-28 h-28 object-contain"
-                                style={{ imageRendering: 'pixelated' }}
-                            />
-                        </motion.div>
-                    );
-                })}
+                        return (
+                            <motion.div
+                                key={item.uiId}
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{
+                                    opacity: 1,
+                                    scale: item.scale,
+                                    rotate: item.rotation,
+                                    x: '-50%',
+                                    y: '-50%',
+                                    left: `${item.x}%`,
+                                    top: `${item.y}%`,
+                                }}
+                                className="absolute pointer-events-none"
+                                style={{
+                                    zIndex: 20 + item.zIndex,
+                                }}
+                            >
+                                <img
+                                    src={src as string}
+                                    alt="sticker"
+                                    className="w-32 h-32 object-contain"
+                                    style={{ imageRendering: 'pixelated' }}
+                                />
+                            </motion.div>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Poop System Layer - On top of main area */}

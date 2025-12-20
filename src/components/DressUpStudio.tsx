@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameState, ALL_ITEMS, ALL_BACKGROUNDS, type GameItem, type PlacedItem, UNLOCK_COSTS } from '../hooks/useGameState';
 import { Rabbit } from './Rabbit';
@@ -34,7 +34,7 @@ export const DressUpStudio: React.FC<DressUpStudioProps> = ({ onClose }) => {
     const { state, actions } = useGameState();
 
     // Local state
-    const [items, setItems] = useState<PlacedItem[]>(state.placedItems || []);
+    const [items, setItems] = useState<PlacedItem[]>(() => state.placedItems || []);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<Tab>('items');
     const [sidebarVisible, setSidebarVisible] = useState(true);
@@ -42,11 +42,6 @@ export const DressUpStudio: React.FC<DressUpStudioProps> = ({ onClose }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [initialIdBase] = useState(() => Date.now());
     const idCounter = useRef(initialIdBase);
-
-    // Sync Item State
-    useEffect(() => {
-        setItems(state.placedItems || []);
-    }, [state.placedItems]);
 
     // Handlers
     const handleAddItem = (gameItem: GameItem) => {
@@ -357,6 +352,18 @@ const DraggableSticker: React.FC<{
         });
     };
 
+    // Pinch-to-zoom gesture logic
+    const lastScale = React.useRef(item.scale);
+    const handlePinch = (_: unknown, info: any) => {
+        // info.scale is the change in scale relative to the start of the gesture
+        const newScale = Math.max(0.1, Math.min(5, lastScale.current * (info.scale || 1)));
+        onUpdate({ scale: newScale });
+    };
+
+    const handlePinchEnd = () => {
+        lastScale.current = item.scale;
+    };
+
     return (
         <motion.div
             drag
@@ -364,6 +371,10 @@ const DraggableSticker: React.FC<{
             dragElastic={0.1}
             onDragStart={() => onSelect()}
             onDragEnd={handleDragEnd}
+            {...({
+                onPinch: handlePinch,
+                onPinchEnd: handlePinchEnd
+            } as any)}
             style={{
                 position: 'absolute',
                 left: `${item.x}%`,
