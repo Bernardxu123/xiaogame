@@ -77,6 +77,18 @@ const DEFAULT_STATE: GameState = {
 };
 
 const STORAGE_KEY = 'rabbit-care-kids-v3';
+const API_BASE = 'http://localhost:3001/api/game';
+
+// Helper: Generate or retrieve a unique device ID for cloud sync
+function getDeviceId(): string {
+    const key = 'rabbit-care-device-id';
+    let id = localStorage.getItem(key);
+    if (!id) {
+        id = `device_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        localStorage.setItem(key, id);
+    }
+    return id;
+}
 
 // All available content populated from asset map
 export const ALL_ITEMS: GameItem[] = assetMap
@@ -123,7 +135,7 @@ export function useGameState() {
         return DEFAULT_STATE;
     });
 
-    // Auto-save
+    // Auto-save to localStorage
     useEffect(() => {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -131,6 +143,78 @@ export function useGameState() {
             console.warn('Failed to save game state:', e);
         }
     }, [state]);
+
+    // Cloud sync: Save to server (debounced)
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [lastSyncTime, setLastSyncTime] = useState(0);
+
+    const syncToCloud = useCallback(async () => {
+        if (isSyncing) return;
+        setIsSyncing(true);
+        try {
+            const deviceId = getDeviceId();
+            const response = await fetch(`${API_BASE}/${deviceId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    hungerLevel: state.hungerLevel,
+                    cleanLevel: state.cleanLevel,
+                    happyLevel: state.happyLevel,
+                    hearts: state.hearts,
+                    level: state.level,
+                    totalHeartsEarned: state.totalHeartsEarned,
+                    equipment: state.equipment,
+                    placedItems: state.placedItems,
+                    poops: state.poops,
+                    currentBackground: state.currentBackground,
+                    unlockedItems: state.unlockedItems,
+                    unlockedBackgrounds: state.unlockedBackgrounds,
+                    lastInteraction: state.lastInteraction,
+                    lastGiftClaimed: state.lastGiftClaimed,
+                }),
+            });
+            if (response.ok) {
+                setLastSyncTime(Date.now());
+                console.log('[Cloud] Synced successfully');
+            }
+        } catch (e) {
+            console.warn('[Cloud] Sync failed:', e);
+        } finally {
+            setIsSyncing(false);
+        }
+    }, [state, isSyncing]);
+
+    const loadFromCloud = useCallback(async () => {
+        try {
+            const deviceId = getDeviceId();
+            const response = await fetch(`${API_BASE}/${deviceId}`);
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const cloudState = result.data;
+                    // Merge cloud state, prioritizing newer data
+                    if (cloudState.lastSaveTime > state.lastInteraction) {
+                        setState(prev => ({ ...prev, ...cloudState }));
+                        console.log('[Cloud] Loaded from cloud');
+                        return true;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[Cloud] Load failed:', e);
+        }
+        return false;
+    }, [state.lastInteraction]);
+
+    // Auto-sync to cloud every 30 seconds if state changed
+    useEffect(() => {
+        const timer = setInterval(() => {
+            if (Date.now() - lastSyncTime > 30000) {
+                syncToCloud();
+            }
+        }, 30000);
+        return () => clearInterval(timer);
+    }, [syncToCloud, lastSyncTime]);
 
     // Decay stats over time
     useEffect(() => {
@@ -276,11 +360,14 @@ export function useGameState() {
 
     return {
         state,
+        isSyncing,
         actions: {
             feed, clean, pet, earnHearts, claimDailyGift, scoopPoop,
             unlockItem, equipItem,
             unlockBackground, setBackground,
             saveOutfit: (items: PlacedItem[]) => setState(prev => ({ ...prev, placedItems: items })),
+            syncToCloud,
+            loadFromCloud,
         },
     };
 }

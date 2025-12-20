@@ -1,26 +1,39 @@
 import { Router, Request, Response } from 'express';
 import db from '../db.js';
-import type { GameState, SaveGameRequest, ApiResponse, Poop } from '../types.js';
+import type { GameState, SaveGameRequest, ApiResponse, Poop, PlacedItem, Equipment } from '../types.js';
 
 const router = Router();
+
+// Default state for new saves
+const DEFAULT_STATE = {
+    hungerLevel: 2,
+    cleanLevel: 2,
+    happyLevel: 2,
+    hearts: 0,
+    level: 1,
+    totalHeartsEarned: 0,
+    equipment: {},
+    placedItems: [],
+    poops: [],
+    currentBackground: 'room',
+    unlockedItems: ['default'],
+    unlockedBackgrounds: ['room'],
+    lastInteraction: 0,
+    lastGiftClaimed: 0,
+};
 
 // GET /api/game/:id - Load game state
 router.get('/:id', (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
-        const row = db.prepare('SELECT * FROM game_saves WHERE id = ?').get(id) as any;
+        const row = db.prepare('SELECT * FROM game_saves WHERE id = ?').get(id) as Record<string, unknown> | undefined;
 
         if (!row) {
             // Return default state if no save exists
             const defaultState: GameState = {
                 id,
-                hunger: 80,
-                cleanliness: 80,
-                happiness: 80,
-                isDressed: false,
-                isSleeping: false,
-                poops: [],
+                ...DEFAULT_STATE,
                 lastSaveTime: Date.now()
             };
 
@@ -30,14 +43,22 @@ router.get('/:id', (req: Request, res: Response) => {
         }
 
         const gameState: GameState = {
-            id: row.id,
-            hunger: row.hunger,
-            cleanliness: row.cleanliness,
-            happiness: row.happiness,
-            isDressed: Boolean(row.is_dressed),
-            isSleeping: Boolean(row.is_sleeping),
-            poops: JSON.parse(row.poops) as Poop[],
-            lastSaveTime: row.last_save_time
+            id: row.id as string,
+            hungerLevel: row.hunger_level as number,
+            cleanLevel: row.clean_level as number,
+            happyLevel: row.happy_level as number,
+            hearts: row.hearts as number,
+            level: row.level as number,
+            totalHeartsEarned: row.total_hearts_earned as number,
+            equipment: JSON.parse(row.equipment as string) as Equipment,
+            placedItems: JSON.parse(row.placed_items as string) as PlacedItem[],
+            poops: JSON.parse(row.poops as string) as Poop[],
+            currentBackground: row.current_background as string,
+            unlockedItems: JSON.parse(row.unlocked_items as string) as string[],
+            unlockedBackgrounds: JSON.parse(row.unlocked_backgrounds as string) as string[],
+            lastInteraction: row.last_interaction as number,
+            lastGiftClaimed: row.last_gift_claimed as number,
+            lastSaveTime: row.last_save_time as number
         };
 
         const response: ApiResponse<GameState> = { success: true, data: gameState };
@@ -60,26 +81,48 @@ router.post('/:id', (req: Request, res: Response) => {
         const now = Date.now();
 
         const stmt = db.prepare(`
-      INSERT INTO game_saves (id, hunger, cleanliness, happiness, is_dressed, is_sleeping, poops, last_save_time)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        hunger = excluded.hunger,
-        cleanliness = excluded.cleanliness,
-        happiness = excluded.happiness,
-        is_dressed = excluded.is_dressed,
-        is_sleeping = excluded.is_sleeping,
-        poops = excluded.poops,
-        last_save_time = excluded.last_save_time
-    `);
+            INSERT INTO game_saves (
+                id, hunger_level, clean_level, happy_level,
+                hearts, level, total_hearts_earned,
+                equipment, placed_items, poops,
+                current_background, unlocked_items, unlocked_backgrounds,
+                last_interaction, last_gift_claimed, last_save_time
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                hunger_level = excluded.hunger_level,
+                clean_level = excluded.clean_level,
+                happy_level = excluded.happy_level,
+                hearts = excluded.hearts,
+                level = excluded.level,
+                total_hearts_earned = excluded.total_hearts_earned,
+                equipment = excluded.equipment,
+                placed_items = excluded.placed_items,
+                poops = excluded.poops,
+                current_background = excluded.current_background,
+                unlocked_items = excluded.unlocked_items,
+                unlocked_backgrounds = excluded.unlocked_backgrounds,
+                last_interaction = excluded.last_interaction,
+                last_gift_claimed = excluded.last_gift_claimed,
+                last_save_time = excluded.last_save_time
+        `);
 
         stmt.run(
             id,
-            body.hunger,
-            body.cleanliness,
-            body.happiness,
-            body.isDressed ? 1 : 0,
-            body.isSleeping ? 1 : 0,
+            body.hungerLevel,
+            body.cleanLevel,
+            body.happyLevel,
+            body.hearts,
+            body.level,
+            body.totalHeartsEarned,
+            JSON.stringify(body.equipment),
+            JSON.stringify(body.placedItems),
             JSON.stringify(body.poops),
+            body.currentBackground,
+            JSON.stringify(body.unlockedItems),
+            JSON.stringify(body.unlockedBackgrounds),
+            body.lastInteraction,
+            body.lastGiftClaimed,
             now
         );
 

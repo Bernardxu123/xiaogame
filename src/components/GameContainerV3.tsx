@@ -29,8 +29,14 @@ const BACKGROUND_IMAGES: Record<string, string> = {
 // Emojis
 const MOOD_EMOJI = ['😢', '😐', '😊'];
 
+// Assets: Items
+const ASSETS = import.meta.glob('../assets/pixel/*.png', { eager: true, as: 'url' });
+
 export const GameContainerV3: React.FC = () => {
     const { state, actions } = useGameState();
+
+    // Status initialization
+    const [canClaimGift] = useState(() => Date.now() - state.lastGiftClaimed > 24 * 60 * 60 * 1000);
 
     // UI State
     const [activeGame, setActiveGame] = useState<'carrot' | 'memory' | 'farm' | null>(null);
@@ -42,13 +48,13 @@ export const GameContainerV3: React.FC = () => {
     const [giftEffect, setGiftEffect] = useState<number | null>(null);
 
     // Time of Day Logic
-    const timeOfDay = useMemo(() => {
+    const [timeOfDay] = useState(() => {
         const hour = new Date().getHours();
         if (hour >= 6 && hour < 10) return 'morning';
         if (hour >= 10 && hour < 17) return 'day';
         if (hour >= 17 && hour < 20) return 'evening';
         return 'night';
-    }, []);
+    });
 
     const dayNightOverlay = useMemo(() => {
         switch (timeOfDay) {
@@ -225,24 +231,24 @@ export const GameContainerV3: React.FC = () => {
                             />
                         </div>
                     </div>
-
-                    {/* Daily Gift Icon */}
-                    <AnimatePresence>
-                        {(Date.now() - state.lastGiftClaimed > 24 * 60 * 60 * 1000) && (
-                            <motion.button
-                                initial={{ scale: 0, rotate: -20 }}
-                                animate={{ scale: 1.2, rotate: 0 }}
-                                exit={{ scale: 0 }}
-                                whileHover={{ scale: 1.4 }}
-                                onClick={handleClaimGift}
-                                className="bg-yellow-400 rounded-2xl p-3 shadow-xl border-4 border-white animate-bounce"
-                            >
-                                <span className="text-4xl">🎁</span>
-                            </motion.button>
-                        )}
-                    </AnimatePresence>
                 </div>
             </div>
+
+            {/* Daily Gift Icon */}
+            <AnimatePresence>
+                {canClaimGift && (
+                    <motion.button
+                        initial={{ scale: 0, rotate: -20 }}
+                        animate={{ scale: 1.2, rotate: 0 }}
+                        exit={{ scale: 0 }}
+                        whileHover={{ scale: 1.4 }}
+                        onClick={handleClaimGift}
+                        className="absolute top-24 right-4 bg-yellow-400 rounded-2xl p-3 shadow-xl border-4 border-white animate-bounce z-40"
+                    >
+                        <span className="text-4xl">🎁</span>
+                    </motion.button>
+                )}
+            </AnimatePresence>
 
             {/* 2. Main Character Area */}
             <div className="absolute inset-0 flex items-center justify-center pt-10 z-20">
@@ -280,13 +286,48 @@ export const GameContainerV3: React.FC = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handlePet}
-                    className="cursor-pointer drop-shadow-2xl filter"
+                    className="relative cursor-pointer drop-shadow-2xl filter z-10"
                 >
                     <Rabbit
                         state={getRabbitState()}
                         equipment={state.equipment}
                     />
                 </motion.div>
+
+                {/* Freeform Stickers (Saved Outfits) */}
+                {state.placedItems?.map((item) => {
+                    const path = `../assets/pixel/${item.itemId}${item.itemId.endsWith('.png') ? '' : '.png'}`;
+                    const src = ASSETS[path] || ASSETS[`../assets/pixel/${item.itemId}`];
+                    if (!src) return null;
+
+                    return (
+                        <motion.div
+                            key={item.uiId}
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={{
+                                opacity: 1,
+                                scale: item.scale,
+                                rotate: item.rotation,
+                                x: '-50%',
+                                y: '-50%',
+                                left: `${item.x}%`,
+                                top: `${item.y}%`,
+                            }}
+                            className="absolute pointer-events-none"
+                            style={{
+                                zIndex: item.zIndex,
+                                position: 'absolute'
+                            }}
+                        >
+                            <img
+                                src={src as string}
+                                alt="sticker"
+                                className="w-28 h-28 object-contain"
+                                style={{ imageRendering: 'pixelated' }}
+                            />
+                        </motion.div>
+                    );
+                })}
             </div>
 
             {/* Poop System Layer - On top of main area */}
@@ -478,21 +519,43 @@ const MenuButton: React.FC<{
     </motion.button>
 );
 
+interface Star {
+    id: number;
+    duration: number;
+    delay: number;
+    width: number;
+    height: number;
+    top: number;
+    left: number;
+}
+
 const Starfield: React.FC = () => {
+    const [stars] = useState<Star[]>(() =>
+        [...Array(20)].map((_, i) => ({
+            id: i,
+            duration: Math.random() * 3 + 2,
+            delay: Math.random() * 2,
+            width: Math.random() * 3 + 1,
+            height: Math.random() * 3 + 1,
+            top: Math.random() * 60,
+            left: Math.random() * 100,
+        }))
+    );
+
     return (
-        <div className="absolute inset-0">
-            {[...Array(20)].map((_, i) => (
+        <div className="absolute inset-0 pointer-events-none">
+            {stars.map((star) => (
                 <motion.div
-                    key={i}
-                    initial={{ opacity: 0.2 }}
+                    key={star.id}
+                    initial={{ opacity: 0 }}
                     animate={{ opacity: [0.2, 1, 0.2] }}
-                    transition={{ repeat: Infinity, duration: Math.random() * 3 + 2, delay: Math.random() * 2 }}
+                    transition={{ repeat: Infinity, duration: star.duration, delay: star.delay }}
                     className="absolute bg-white rounded-full"
                     style={{
-                        width: Math.random() * 3 + 1,
-                        height: Math.random() * 3 + 1,
-                        top: `${Math.random() * 60}%`,
-                        left: `${Math.random() * 100}%`,
+                        width: star.width,
+                        height: star.height,
+                        top: `${star.top}%`,
+                        left: `${star.left}%`,
                     }}
                 />
             ))}

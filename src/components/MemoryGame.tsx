@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trophy, RefreshCcw, Check } from 'lucide-react';
 
@@ -30,11 +30,24 @@ interface MemoryGameProps {
 }
 
 export const MemoryGame: React.FC<MemoryGameProps> = ({ onClose, onComplete }) => {
-    const [cards, setCards] = useState<Card[]>([]);
+    const [gameWon, setGameWon] = useState(false);
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
     const [isLocked, setIsLocked] = useState(false);
     const [moves, setMoves] = useState(0);
-    const [gameWon, setGameWon] = useState(false);
+
+    // Initial card generation (Lazy)
+    const [cards, setCards] = useState<Card[]>(() => {
+        const initialCards: Card[] = [];
+        const gameIcons = CARD_ICONS.slice(0, 6); // 6 pairs
+        gameIcons.forEach((icon) => {
+            initialCards.push({ id: Math.random(), icon, isFlipped: false, isMatched: false });
+            initialCards.push({ id: Math.random(), icon, isFlipped: false, isMatched: false });
+        });
+        // Shuffle and re-assign IDs to be safe
+        return initialCards
+            .sort(() => Math.random() - 0.5)
+            .map((c, i) => ({ ...c, id: i }));
+    });
 
     // Game Logic
     const checkForMatch = useCallback((id1: number, id2: number, currentCards: Card[]) => {
@@ -71,7 +84,7 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onClose, onComplete }) =
                 setIsLocked(false);
             }, 1000);
         }
-    }, [moves]);
+    }, []);
 
     const startNewGame = useCallback(() => {
         // Create pairs
@@ -94,10 +107,9 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onClose, onComplete }) =
         setIsLocked(false);
     }, []);
 
-    // Initialize
-    useEffect(() => {
-        startNewGame();
-    }, [startNewGame]);
+    // Initialize - No longer need to call startNewGame synchronously here
+    // but we can keep it for future resets if needed. 
+    // The initial call is now handled by useState.
 
     const handleCardClick = (id: number) => {
         if (isLocked) return;
@@ -114,7 +126,7 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onClose, onComplete }) =
 
         if (newFlipped.length === 2) {
             setIsLocked(true);
-            setMoves(m => m + 1);
+            setMoves((m: number) => m + 1);
             checkForMatch(newFlipped[0], newFlipped[1], cards);
         }
     };

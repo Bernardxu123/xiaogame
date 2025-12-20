@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameState, ALL_ITEMS, ALL_BACKGROUNDS, type GameItem, type PlacedItem, UNLOCK_COSTS } from '../hooks/useGameState';
 import { Rabbit } from './Rabbit';
-import { Check, Trash2, Maximize, RotateCw, Image as ImageIcon, Sparkles, X } from 'lucide-react';
+import { Check, Trash2, Maximize, RotateCw, Image as ImageIcon, Sparkles, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Assets: Backgrounds
 import bgRoom from '../assets/pixel/bg_room.jpg';
@@ -37,8 +37,11 @@ export const DressUpStudio: React.FC<DressUpStudioProps> = ({ onClose }) => {
     const [items, setItems] = useState<PlacedItem[]>(state.placedItems || []);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<Tab>('items');
+    const [sidebarVisible, setSidebarVisible] = useState(true);
 
     const containerRef = useRef<HTMLDivElement>(null);
+    const [initialIdBase] = useState(() => Date.now());
+    const idCounter = useRef(initialIdBase);
 
     // Sync Item State
     useEffect(() => {
@@ -47,8 +50,9 @@ export const DressUpStudio: React.FC<DressUpStudioProps> = ({ onClose }) => {
 
     // Handlers
     const handleAddItem = (gameItem: GameItem) => {
+        idCounter.current += 1;
         const newItem: PlacedItem = {
-            uiId: `${gameItem.id}_${Date.now()}`,
+            uiId: `${gameItem.id}_${idCounter.current}`,
             itemId: gameItem.id,
             x: 50,
             y: 50,
@@ -149,9 +153,17 @@ export const DressUpStudio: React.FC<DressUpStudioProps> = ({ onClose }) => {
                 {/* 1. Canvas Area */}
                 <div
                     ref={containerRef}
-                    className="flex-1 relative overflow-hidden group shadow-inner"
+                    className="flex-1 relative overflow-hidden group shadow-inner bg-slate-200/20"
                     onClick={() => setSelectedId(null)}
                 >
+                    {/* Sidebar Toggle Button */}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setSidebarVisible(!sidebarVisible); }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 z-50 p-2 bg-white/90 backdrop-blur-md rounded-full shadow-xl border border-white/50 hover:bg-white transition-all hover:scale-110 active:scale-95 text-slate-500 group-hover:opacity-100 opacity-80"
+                    >
+                        {sidebarVisible ? <ChevronRight className="w-6 h-6" /> : <ChevronLeft className="w-6 h-6" />}
+                    </button>
+
                     {/* Dynamic Background Image */}
                     <div className="absolute inset-0 z-0 transition-all duration-700">
                         <img
@@ -231,80 +243,90 @@ export const DressUpStudio: React.FC<DressUpStudioProps> = ({ onClose }) => {
                 </div>
 
                 {/* 2. Sidebar */}
-                <div className="w-80 bg-white/90 backdrop-blur-xl border-l border-white/50 flex flex-col shadow-2xl z-20">
-                    {/* Tabs */}
-                    <div className="flex p-2 gap-2 bg-slate-50 border-b border-slate-100">
-                        <button
-                            onClick={() => setActiveTab('items')}
-                            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'items' ? 'bg-white shadow-md text-slate-800' : 'text-slate-400 hover:bg-slate-100'}`}
+                <AnimatePresence>
+                    {sidebarVisible && (
+                        <motion.div
+                            initial={{ x: 320 }}
+                            animate={{ x: 0 }}
+                            exit={{ x: 320 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="w-80 bg-white/95 backdrop-blur-xl border-l border-white/50 flex flex-col shadow-2xl z-20"
                         >
-                            <Sparkles className="w-4 h-4" /> 贴纸素材
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('backgrounds')}
-                            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'backgrounds' ? 'bg-white shadow-md text-slate-800' : 'text-slate-400 hover:bg-slate-100'}`}
-                        >
-                            <ImageIcon className="w-4 h-4" /> 场景切换
-                        </button>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
-
-                        {/* Items Grid */}
-                        {activeTab === 'items' && (
-                            <div className="grid grid-cols-3 gap-3">
-                                {ALL_ITEMS.map((item) => (
-                                    <motion.div
-                                        key={item.id}
-                                        whileHover={{ scale: 1.05, y: -2 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => handleAddItem(item)}
-                                        className="aspect-square bg-white rounded-2xl shadow-sm border border-slate-100 hover:border-amber-400 hover:shadow-md cursor-pointer flex flex-col items-center justify-center p-2 group relative transition-all"
-                                    >
-                                        <div className="flex-1 w-full flex items-center justify-center relative">
-                                            <ItemImage filename={item.image} />
-                                        </div>
-                                        <span className="text-[10px] text-slate-400 font-medium mt-1 group-hover:text-amber-500 transition-colors">{item.name}</span>
-                                    </motion.div>
-                                ))}
+                            {/* Tabs */}
+                            <div className="flex p-2 gap-2 bg-slate-50 border-b border-slate-100">
+                                <button
+                                    onClick={() => setActiveTab('items')}
+                                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'items' ? 'bg-white shadow-md text-slate-800' : 'text-slate-400 hover:bg-slate-100'}`}
+                                >
+                                    <Sparkles className="w-4 h-4" /> 贴纸素材
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('backgrounds')}
+                                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'backgrounds' ? 'bg-white shadow-md text-slate-800' : 'text-slate-400 hover:bg-slate-100'}`}
+                                >
+                                    <ImageIcon className="w-4 h-4" /> 场景切换
+                                </button>
                             </div>
-                        )}
 
-                        {/* Backgrounds Grid */}
-                        {activeTab === 'backgrounds' && (
-                            <div className="space-y-3">
-                                {ALL_BACKGROUNDS.map((bg) => {
-                                    const isUnlocked = bg.unlocked || state.unlockedBackgrounds.includes(bg.id);
-                                    const isCurrent = state.currentBackground === bg.id;
+                            {/* Content */}
+                            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
 
-                                    return (
-                                        <motion.div
-                                            key={bg.id}
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
-                                            onClick={() => handleSetBackground(bg.id)}
-                                            className={`
+                                {/* Items Grid */}
+                                {activeTab === 'items' && (
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {ALL_ITEMS.map((item) => (
+                                            <motion.div
+                                                key={item.id}
+                                                whileHover={{ scale: 1.05, y: -2 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => handleAddItem(item)}
+                                                className="aspect-square bg-white rounded-2xl shadow-sm border border-slate-100 hover:border-amber-400 hover:shadow-md cursor-pointer flex flex-col items-center justify-center p-2 group relative transition-all"
+                                            >
+                                                <div className="flex-1 w-full flex items-center justify-center relative">
+                                                    <ItemImage filename={item.image} />
+                                                </div>
+                                                <span className="text-[10px] text-slate-400 font-medium mt-1 group-hover:text-amber-500 transition-colors">{item.name}</span>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Backgrounds Grid */}
+                                {activeTab === 'backgrounds' && (
+                                    <div className="space-y-3">
+                                        {ALL_BACKGROUNDS.map((bg) => {
+                                            const isUnlocked = bg.unlocked || state.unlockedBackgrounds.includes(bg.id);
+                                            const isCurrent = state.currentBackground === bg.id;
+
+                                            return (
+                                                <motion.div
+                                                    key={bg.id}
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    onClick={() => handleSetBackground(bg.id)}
+                                                    className={`
                                                 relative h-32 rounded-2xl overflow-hidden cursor-pointer border-4 transition-all shadow-sm
                                                 ${isCurrent ? 'border-green-500 ring-2 ring-green-200' : 'border-white hover:border-blue-300'}
                                             `}
-                                        >
-                                            <img src={BACKGROUND_IMAGES[bg.id]} alt={bg.name} className={`w-full h-full object-cover transition-all ${!isUnlocked ? 'grayscale blur-[1px]' : ''}`} />
+                                                >
+                                                    <img src={BACKGROUND_IMAGES[bg.id]} alt={bg.name} className={`w-full h-full object-cover transition-all ${!isUnlocked ? 'grayscale blur-[1px]' : ''}`} />
 
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-3">
-                                                <div className="font-bold text-white text-sm flex items-center justify-between">
-                                                    <span>{bg.name}</span>
-                                                    {isCurrent && <Check className="w-4 h-4 text-green-400" />}
-                                                    {!isUnlocked && <span className="text-[10px] bg-black/50 px-2 py-0.5 rounded-full">🔒 {UNLOCK_COSTS.background}</span>}
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    )
-                                })}
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-3">
+                                                        <div className="font-bold text-white text-sm flex items-center justify-between">
+                                                            <span>{bg.name}</span>
+                                                            {isCurrent && <Check className="w-4 h-4 text-green-400" />}
+                                                            {!isUnlocked && <span className="text-[10px] bg-black/50 px-2 py-0.5 rounded-full">🔒 {UNLOCK_COSTS.background}</span>}
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )
+                                        })}
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
-                </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </motion.div>
     );
@@ -320,55 +342,53 @@ const DraggableSticker: React.FC<{
     const path = `../assets/pixel/${item.itemId}${item.itemId.endsWith('.png') ? '' : '.png'}`;
     const src = ASSETS[path] || ASSETS[`../assets/pixel/${item.itemId}`];
 
+    // High-precision pointer logic
+    const handleDragEnd = (_: unknown, info: { point: { x: number; y: number } }) => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+
+        // Calculate percentages based on exact pointer release position relative to container
+        const px = ((info.point.x - rect.left) / rect.width) * 100;
+        const py = ((info.point.y - rect.top) / rect.height) * 100;
+
+        onUpdate({
+            x: Math.max(0, Math.min(100, px)),
+            y: Math.max(0, Math.min(100, py))
+        });
+    };
+
     return (
         <motion.div
             drag
             dragMomentum={false}
-            dragElastic={0.15} // Increased slightly for a more responsive feel
+            dragElastic={0.1}
+            onDragStart={() => onSelect()}
+            onDragEnd={handleDragEnd}
             style={{
                 position: 'absolute',
-                top: `${item.y}%`,
                 left: `${item.x}%`,
+                top: `${item.y}%`,
                 x: '-50%',
                 y: '-50%',
                 zIndex: isSelected ? 100 : item.zIndex,
-                touchAction: 'none'
+                touchAction: 'none',
             }}
-            onDragStart={() => onSelect()}
-            onDragEnd={(_event, info) => {
-                if (!containerRef.current) return;
-                const containerRect = containerRef.current.getBoundingClientRect();
-
-                // Calculate percentage delta from offset to avoid "snapping" to cursor center
-                const deltaXPercent = (info.offset.x / containerRect.width) * 100;
-                const deltaYPercent = (info.offset.y / containerRect.height) * 100;
-
-                onUpdate({
-                    x: Math.max(0, Math.min(100, item.x + deltaXPercent)),
-                    y: Math.max(0, Math.min(100, item.y + deltaYPercent))
-                });
+            animate={{
+                scale: item.scale,
+                rotate: item.rotation,
+                filter: isSelected ? 'drop-shadow(0 20px 40px rgba(0,0,0,0.35))' : 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))',
             }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="cursor-grab active:cursor-grabbing pointer-events-auto group/sticker"
             onClick={(e) => {
                 e.stopPropagation();
                 onSelect();
             }}
-            className="cursor-grab active:cursor-grabbing pointer-events-auto"
-            animate={{
-                scale: item.scale,
-                rotate: item.rotation,
-                filter: isSelected ? 'drop-shadow(0 15px 30px rgba(0,0,0,0.3))' : 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))'
-            }}
-            transition={{
-                type: 'spring',
-                stiffness: 300,
-                damping: 25,
-                mass: 0.5
-            }}
         >
-            <div className={`relative transition-all duration-300 ${isSelected ? 'ring-4 ring-amber-400 ring-offset-4 rounded-2xl shadow-2xl scale-110' : ''}`}>
+            <div className={`relative transition-all duration-300 ${isSelected ? 'ring-4 ring-amber-400 ring-offset-4 rounded-2xl shadow-2xl scale-105' : 'hover:scale-105'}`}>
                 {src ? (
                     <img
-                        src={src}
+                        src={src as string}
                         alt="sticker"
                         className="w-24 h-24 sm:w-32 sm:h-32 object-contain pointer-events-none select-none"
                         style={{ imageRendering: 'pixelated' }}
@@ -376,27 +396,20 @@ const DraggableSticker: React.FC<{
                 ) : (
                     <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-400 font-mono">?</div>
                 )}
-
-                {isSelected && (
-                    <motion.div
-                        layoutId="selection-glow"
-                        className="absolute inset-0 bg-amber-400/10 rounded-2xl animate-pulse"
-                    />
-                )}
             </div>
+
             {isSelected && (
                 <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-4 -right-4 w-8 h-8 bg-amber-500 rounded-full border-4 border-white shadow-xl flex items-center justify-center"
+                    className="absolute -top-4 -right-4 w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full border-4 border-white shadow-xl flex items-center justify-center"
                 >
-                    <Sparkles className="w-4 h-4 text-white" />
+                    <Sparkles className="w-5 h-5 text-white" />
                 </motion.div>
             )}
         </motion.div>
     );
 };
-
 const ItemImage: React.FC<{ filename: string }> = ({ filename }) => {
     const path = `../assets/pixel/${filename}`;
     const src = ASSETS[path];
