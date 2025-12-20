@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
+import assetMap from '../assets/asset_map.json';
 
 // Types
 export interface GameItem {
     id: string;
     name: string;
     type: 'head' | 'body' | 'hand';
-    cost: number;
-    icon: string;
+    cost: number; // cost in hearts
+    icon: string; // Emoji fallback, but we primarily use images now
+    image: string; // Filename for the asset
 }
+
 
 export interface Background {
     id: string;
@@ -58,14 +61,18 @@ const DEFAULT_STATE: GameState = {
 
 const STORAGE_KEY = 'rabbit-care-kids-v3';
 
-// All available content
-export const ALL_ITEMS: GameItem[] = [
-    { id: 'bow', name: '蝴蝶结', type: 'head', cost: 50, icon: '🎀' },
-    { id: 'hat', name: '礼帽', type: 'head', cost: 80, icon: '🎩' },
-    { id: 'dress', name: '粉裙子', type: 'body', cost: 100, icon: '👗' },
-    { id: 'skirt', name: '蓝短裙', type: 'body', cost: 80, icon: '👘' },
-    { id: 'carrot', name: '胡萝卜', type: 'hand', cost: 30, icon: '🥕' },
-];
+// All available content populated from asset map
+export const ALL_ITEMS: GameItem[] = assetMap
+    .filter(item => item.type === 'head' || item.type === 'body' || item.type === 'hand')
+    .map(item => ({
+        id: item.new.replace('.png', ''), // ID is filename without extension
+        name: item.name,
+        type: item.type as 'head' | 'body' | 'hand',
+        cost: item.cost,
+        icon: item.icon,
+        image: item.new // Now located in standard pixel folder
+    }));
+
 
 export const ALL_BACKGROUNDS: Background[] = [
     { id: 'room', name: '温馨小屋', unlocked: true },

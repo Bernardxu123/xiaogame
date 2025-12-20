@@ -1,0 +1,402 @@
+[
+    {
+        "original": "全能换装素材1_00.png",
+        "new": "head_headphones.png",
+        "name": "粉色耳机",
+        "type": "head",
+        "cost": 120,
+        "icon": "🎧"
+    },
+    {
+        "original": "全能换装素材1_01.png",
+        "new": "head_tophat.png",
+        "name": "魔术礼帽",
+        "type": "head",
+        "cost": 100,
+        "icon": "🎩"
+    },
+    {
+        "original": "全能换装素材1_02.png",
+        "new": "head_bow_red.png",
+        "name": "大红蝴蝶结",
+        "type": "head",
+        "cost": 50,
+        "icon": "🎀"
+    },
+    {
+        "original": "全能换装素材1_03.png",
+        "new": "head_crown_gold.png",
+        "name": "黄金皇冠",
+        "type": "head",
+        "cost": 500,
+        "icon": "👑"
+    },
+    {
+        "original": "全能换装素材1_04.png",
+        "new": "head_flower_crown.png",
+        "name": "花环",
+        "type": "head",
+        "cost": 80,
+        "icon": "🌸"
+    },
+    {
+        "original": "全能换装素材1_05.png",
+        "new": "body_overalls_blue.png",
+        "name": "蓝色背带裤",
+        "type": "body",
+        "cost": 100,
+        "icon": "👖"
+    },
+    {
+        "original": "全能换装素材1_06.png",
+        "new": "body_dress_pink.png",
+        "name": "粉色连衣裙",
+        "type": "body",
+        "cost": 120,
+        "icon": "👗"
+    },
+    {
+        "original": "全能换装素材1_07.png",
+        "new": "body_sailor.png",
+        "name": "水手服",
+        "type": "body",
+        "cost": 150,
+        "icon": "⚓"
+    },
+    {
+        "original": "全能换装素材1_08.png",
+        "new": "body_cape_red.png",
+        "name": "超人披风",
+        "type": "body",
+        "cost": 180,
+        "icon": "🦸"
+    },
+    {
+        "original": "全能换装素材1_09.png",
+        "new": "body_skirt_grass.png",
+        "name": "夏威夷草裙",
+        "type": "body",
+        "cost": 90,
+        "icon": "🌴"
+    },
+    {
+        "original": "全能换装素材1_10.png",
+        "new": "hand_balloon.png",
+        "name": "红气球",
+        "type": "hand",
+        "cost": 60,
+        "icon": "🎈"
+    },
+    {
+        "original": "全能换装素材1_11.png",
+        "new": "hand_pinwheel.png",
+        "name": "彩色风车",
+        "type": "hand",
+        "cost": 70,
+        "icon": "🌀"
+    },
+    {
+        "original": "全能换装素材1_12.png",
+        "new": "hand_wand.png",
+        "name": "魔法棒",
+        "type": "hand",
+        "cost": 200,
+        "icon": "✨"
+    },
+    {
+        "original": "全能换装素材1_13.png",
+        "new": "hand_carrot.png",
+        "name": "大胡萝卜",
+        "type": "hand",
+        "cost": 30,
+        "icon": "🥕"
+    },
+    {
+        "original": "全能换装素材1_14.png",
+        "new": "hand_icecream.png",
+        "name": "冰淇淋",
+        "type": "hand",
+        "cost": 40,
+        "icon": "🍦"
+    },
+    {
+        "original": "全能换装素材2_00.png",
+        "new": "head_chef.png",
+        "name": "厨师帽",
+        "type": "head",
+        "cost": 90,
+        "icon": "👨‍🍳"
+    },
+    {
+        "original": "全能换装素材2_01.png",
+        "new": "head_witch.png",
+        "name": "巫师帽",
+        "type": "head",
+        "cost": 110,
+        "icon": "🧙‍♀️"
+    },
+    {
+        "original": "全能换装素材2_02.png",
+        "new": "head_viking.png",
+        "name": "维京头盔",
+        "type": "head",
+        "cost": 130,
+        "icon": "🪖"
+    },
+    {
+        "original": "全能换装素材2_03.png",
+        "new": "head_pirate.png",
+        "name": "海盗头巾",
+        "type": "head",
+        "cost": 100,
+        "icon": "🏴‍☠️"
+    },
+    {
+        "original": "全能换装素材2_04.png",
+        "new": "head_cap_blue.png",
+        "name": "棒球帽",
+        "type": "head",
+        "cost": 60,
+        "icon": "🧢"
+    },
+    {
+        "original": "全能换装素材2_05.png",
+        "new": "body_astronaut.png",
+        "name": "宇航服",
+        "type": "body",
+        "cost": 300,
+        "icon": "🚀"
+    },
+    {
+        "original": "全能换装素材2_06.png",
+        "new": "body_kimono.png",
+        "name": "红浴衣",
+        "type": "body",
+        "cost": 150,
+        "icon": "👘"
+    },
+    {
+        "original": "全能换装素材2_07.png",
+        "new": "body_coat_winter.png",
+        "name": "冬日棉袄",
+        "type": "body",
+        "cost": 120,
+        "icon": "🧥"
+    },
+    {
+        "original": "全能换装素材2_08.png",
+        "new": "body_armor.png",
+        "name": "骑士铠甲",
+        "type": "body",
+        "cost": 250,
+        "icon": "🛡️"
+    },
+    {
+        "original": "全能换装素材2_09.png",
+        "new": "body_shirt_hawaii.png",
+        "name": "花衬衫",
+        "type": "body",
+        "cost": 80,
+        "icon": "🏖️"
+    },
+    {
+        "original": "全能换装素材2_10.png",
+        "new": "hand_sword.png",
+        "name": "勇者之剑",
+        "type": "hand",
+        "cost": 150,
+        "icon": "⚔️"
+    },
+    {
+        "original": "全能换装素材2_11.png",
+        "new": "hand_fishingrod.png",
+        "name": "钓鱼竿",
+        "type": "hand",
+        "cost": 100,
+        "icon": "🎣"
+    },
+    {
+        "original": "全能换装素材2_12.png",
+        "new": "hand_lantern.png",
+        "name": "提灯",
+        "type": "hand",
+        "cost": 90,
+        "icon": "🏮"
+    },
+    {
+        "original": "全能换装素材2_13.png",
+        "new": "hand_pizza.png",
+        "name": "披萨",
+        "type": "hand",
+        "cost": 50,
+        "icon": "🍕"
+    },
+    {
+        "original": "全能换装素材2_14.png",
+        "new": "hand_book.png",
+        "name": "魔法书",
+        "type": "hand",
+        "cost": 70,
+        "icon": "📖"
+    },
+    {
+        "original": "全能换装素材3_00.png",
+        "new": "head_party.png",
+        "name": "派对帽",
+        "type": "head",
+        "cost": 40,
+        "icon": "🎉"
+    },
+    {
+        "original": "全能换装素材3_01.png",
+        "new": "head_crown_jewel.png",
+        "name": "宝石王冠",
+        "type": "head",
+        "cost": 450,
+        "icon": "💎"
+    },
+    {
+        "original": "全能换装素材3_02.png",
+        "new": "head_fireman.png",
+        "name": "消防帽",
+        "type": "head",
+        "cost": 90,
+        "icon": "🚒"
+    },
+    {
+        "original": "全能换装素材3_03.png",
+        "new": "head_robinhood.png",
+        "name": "游侠帽",
+        "type": "head",
+        "cost": 80,
+        "icon": "🏹"
+    },
+    {
+        "original": "全能换装素材3_04.png",
+        "new": "head_beanie.png",
+        "name": "毛线帽",
+        "type": "head",
+        "cost": 50,
+        "icon": "🎿"
+    },
+    {
+        "original": "全能换装素材3_05.png",
+        "new": "body_tutu.png",
+        "name": "芭蕾裙",
+        "type": "body",
+        "cost": 140,
+        "icon": "🩰"
+    },
+    {
+        "original": "全能换装素材3_06.png",
+        "new": "body_coat_doctor.png",
+        "name": "白大褂",
+        "type": "body",
+        "cost": 110,
+        "icon": "👨‍⚕️"
+    },
+    {
+        "original": "全能换装素材3_07.png",
+        "new": "body_overalls_denim.png",
+        "name": "牛仔工装",
+        "type": "body",
+        "cost": 100,
+        "icon": "👖"
+    },
+    {
+        "original": "全能换装素材3_08.png",
+        "new": "body_lederhosen.png",
+        "name": "皮短裤",
+        "type": "body",
+        "cost": 110,
+        "icon": "🧗"
+    },
+    {
+        "original": "全能换装素材3_09.png",
+        "new": "body_suit.png",
+        "name": "黑西装",
+        "type": "body",
+        "cost": 200,
+        "icon": "🕴️"
+    },
+    {
+        "original": "全能换装素材3_11.png",
+        "new": "hand_shield.png",
+        "name": "盾牌",
+        "type": "hand",
+        "cost": 150,
+        "icon": "🛡️"
+    },
+    {
+        "original": "全能换装素材3_12.png",
+        "new": "hand_guitar.png",
+        "name": "吉他",
+        "type": "hand",
+        "cost": 180,
+        "icon": "🎸"
+    },
+    {
+        "original": "全能换装素材3_15.png",
+        "new": "hand_apple.png",
+        "name": "红苹果",
+        "type": "hand",
+        "cost": 20,
+        "icon": "🍎"
+    },
+    {
+        "original": "全能换装素材3_16.png",
+        "new": "hand_chest.png",
+        "name": "宝箱",
+        "type": "hand",
+        "cost": 300,
+        "icon": "💰"
+    },
+    {
+        "original": "全能换装素材3_17.png",
+        "new": "hand_coffee.png",
+        "name": "热咖啡",
+        "type": "hand",
+        "cost": 40,
+        "icon": "☕"
+    },
+    {
+        "original": "多角度三视图_00.png",
+        "new": "rabbit_base_idle.png",
+        "name": "Base Idle",
+        "type": "base",
+        "cost": 0,
+        "icon": ""
+    },
+    {
+        "original": "多角度三视图_01.png",
+        "new": "rabbit_base_side.png",
+        "name": "Base Side",
+        "type": "base",
+        "cost": 0,
+        "icon": ""
+    },
+    {
+        "original": "多角度三视图_02.png",
+        "new": "rabbit_base_back.png",
+        "name": "Base Back",
+        "type": "base",
+        "cost": 0,
+        "icon": ""
+    },
+    {
+        "original": "游戏状态全家桶1_05.png",
+        "new": "rabbit_sad.png",
+        "name": "Rabbit Sad",
+        "type": "emotion",
+        "cost": 0,
+        "icon": ""
+    },
+    {
+        "original": "游戏状态全家桶1_07.png",
+        "new": "effect_zzz.png",
+        "name": "Effect Zzz",
+        "type": "effect",
+        "cost": 0,
+        "icon": ""
+    }
+]

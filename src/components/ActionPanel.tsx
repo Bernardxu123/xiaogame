@@ -1,8 +1,8 @@
 import React from 'react';
-import pixelCarrot from '../assets/pixel/carrot.png';
+import pixelCarrot from '../assets/pixel/hand_carrot.png';
 import scoopIcon from '../assets/scoop.png'; // Fallback
-import pixelDress from '../assets/pixel/dress.png';
-import pixelSleep from '../assets/pixel/rabbit-sleep.png'; // Use rabbit sleep as icon
+import pixelDress from '../assets/pixel/body_dress_pink.png';
+import pixelSleep from '../assets/pixel/effect_zzz.png'; // Use Zzz effect icon for button
 import { Moon } from 'lucide-react';
 
 interface ActionPanelProps {

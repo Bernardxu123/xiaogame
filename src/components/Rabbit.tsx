@@ -1,19 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-// Base Rabbits
-import rabbitIdle from '../assets/pixel/rabbit-idle.png';
-import rabbitHappy from '../assets/pixel/rabbit-happy.png';
-import rabbitSad from '../assets/pixel/rabbit-sad.png';
-import rabbitEat1 from '../assets/pixel/rabbit-eat-1.png';
-import rabbitEat2 from '../assets/pixel/rabbit-eat-2.png';
-import rabbitSleep from '../assets/pixel/rabbit-sleep.png';
 
-// Clothing Assets (Assumed to be transparent overlays)
-import dressIcon from '../assets/pixel/dress.png';
-import skirtIcon from '../assets/pixel/skirt.png';
-import bowIcon from '../assets/pixel/bow.png';
-import hatIcon from '../assets/pixel/to_fix/rabbit-idle.png'; // Placeholder if no hat yet
-import carrotIcon from '../assets/pixel/carrot.png';
+// Base Rabbits
+import rabbitIdle from '../assets/pixel/rabbit_base_idle.png';
+import rabbitSad from '../assets/pixel/rabbit_sad.png';
+import rabbitEat1 from '../assets/pixel/rabbit-eat-1.png'; // Kept
+import rabbitEat2 from '../assets/pixel/rabbit-eat-2.png'; // Kept
+import rabbitSleep from '../assets/pixel/rabbit_sleeping.png'; // Recovered
+import effectZzz from '../assets/pixel/effect_zzz.png';
+
+// Dynamic Asset Loading
+const ASSETS = import.meta.glob('../assets/pixel/*.png', { eager: true, as: 'url' });
+
 import { cn } from '../lib/utils';
 import { FrameAnimation } from './FrameAnimation';
 
@@ -29,17 +27,16 @@ interface RabbitProps {
     className?: string;
 }
 
-// Asset Mapping
-const ASSETS: Record<string, string> = {
-    'dress': dressIcon,
-    'skirt': skirtIcon,
-    'bow': bowIcon,
-    'hat': hatIcon,
-    'carrot': carrotIcon,
-};
-
 export const Rabbit: React.FC<RabbitProps> = ({ state, equipment, className }) => {
-    // Logic to determine base rabbit image
+
+    // Helper to get asset URL by ID
+    const getAssetUrl = (id?: string) => {
+        if (!id) return null;
+        // Map ID to filename
+        const path = `../assets/pixel/final/${id}.png`;
+        return ASSETS[path] || null;
+    };
+
     const renderBaseRabbit = () => {
         switch (state) {
             case 'eating':
@@ -52,12 +49,19 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, equipment, className }) =
                 );
             case 'sleeping':
                 return (
-                    <img
-                        src={rabbitSleep}
-                        alt="Rabbit Sleeping"
-                        className="w-full h-full object-contain drop-shadow-2xl opacity-90"
-                        style={{ imageRendering: 'pixelated' }}
-                    />
+                    <div className="relative w-full h-full">
+                        <img
+                            src={rabbitSleep}
+                            alt="Rabbit Sleeping"
+                            className="w-full h-full object-contain drop-shadow-2xl opacity-90"
+                            style={{ imageRendering: 'pixelated' }}
+                        />
+                        <img
+                            src={effectZzz}
+                            className="absolute top-0 right-0 w-16 h-16 animate-pulse"
+                            alt="zzz"
+                        />
+                    </div>
                 );
             default:
                 let imageSrc = rabbitIdle;
@@ -82,39 +86,38 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, equipment, className }) =
                 {renderBaseRabbit()}
             </div>
 
-            {/* 2. Clothing Layers (Only if not sleeping/eating for now, or maybe allow it?) */}
-            {/* We usually want clothes to vanish when sleeping or eating special anims for simplicity, OR overlay them carefully. */}
-            {state !== 'sleeping' && state !== 'eating' && (
+            {/* 2. Clothing Layers - Only show if not sleeping to avoid weird overlay on lying down rabbit */}
+            {state !== 'sleeping' && (
                 <>
                     {/* Body Layer */}
-                    {equipment.body && ASSETS[equipment.body] && (
+                    {getAssetUrl(equipment.body) && (
                         <motion.img
-                            src={ASSETS[equipment.body]}
+                            src={getAssetUrl(equipment.body)!}
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none"
+                            className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none translate-y-[2px]" // slight adjust
                             style={{ imageRendering: 'pixelated', transform: 'scale(1.05)' }}
                         />
                     )}
 
                     {/* Head Layer */}
-                    {equipment.head && ASSETS[equipment.head] && (
+                    {getAssetUrl(equipment.head) && (
                         <motion.img
-                            src={ASSETS[equipment.head]}
+                            src={getAssetUrl(equipment.head)!}
                             initial={{ y: -20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            className="absolute inset-0 w-full h-full object-contain z-20 pointer-events-none"
-                            style={{ imageRendering: 'pixelated' }} // Head items usually need offset, handling via CSS/Image
+                            className="absolute inset-0 w-full h-full object-contain z-20 pointer-events-none -translate-y-[8px]" // slight lift for hats
+                            style={{ imageRendering: 'pixelated' }}
                         />
                     )}
 
                     {/* Hand Layer */}
-                    {equipment.hand && ASSETS[equipment.hand] && (
+                    {getAssetUrl(equipment.hand) && (
                         <motion.img
-                            src={ASSETS[equipment.hand]}
+                            src={getAssetUrl(equipment.hand)!}
                             initial={{ x: 20, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
-                            className="absolute inset-0 w-full h-full object-contain z-20 pointer-events-none"
+                            className="absolute inset-0 w-full h-full object-contain z-20 pointer-events-none translate-x-[10px]" // slight offset
                             style={{ imageRendering: 'pixelated' }}
                         />
                     )}
