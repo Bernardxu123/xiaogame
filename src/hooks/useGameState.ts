@@ -35,6 +35,9 @@ export interface GameState {
         body?: string;
         hand?: string;
     };
+    // New Freeform System
+    placedItems: PlacedItem[];
+
     currentBackground: string;
     unlockedItems: string[]; // IDs of unlocked items
     unlockedBackgrounds: string[]; // IDs of unlocked backgrounds
@@ -42,6 +45,16 @@ export interface GameState {
     // Timestamps
     lastInteraction: number;
     lastGiftClaimed: number; // Unix timestamp
+}
+
+export interface PlacedItem {
+    uiId: string;       // Unique ID for this instance (timestamp + random)
+    itemId: string;     // Asset ID
+    x: number;          // Relative X %
+    y: number;          // Relative Y %
+    scale: number;      // Scale multiplier
+    rotation: number;   // Rotation degrees
+    zIndex: number;     // Layer order
 }
 
 const DEFAULT_STATE: GameState = {
@@ -52,6 +65,7 @@ const DEFAULT_STATE: GameState = {
     level: 1,
     totalHeartsEarned: 0,
     equipment: {},
+    placedItems: [],
     currentBackground: 'room',
     unlockedItems: ['default'],
     unlockedBackgrounds: ['room'],
@@ -230,6 +244,7 @@ export function useGameState() {
             feed, clean, pet, earnHearts, claimDailyGift,
             unlockItem, equipItem,
             unlockBackground, setBackground,
+            saveOutfit: (items: PlacedItem[]) => setState(prev => ({ ...prev, placedItems: items })),
         },
     };
 }

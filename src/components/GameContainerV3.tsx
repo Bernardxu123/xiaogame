@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import { Rabbit } from './Rabbit';
 import { CarrotGame } from './CarrotGame';
-import { Wardrobe } from './Wardrobe';
+import { DressUpStudio } from './DressUpStudio';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Background Assets
@@ -329,20 +329,7 @@ export const GameContainerV3: React.FC = () => {
                 )}
 
                 {showWardrobe && (
-                    <div className="fixed inset-0 z-50">
-                        <Wardrobe
-                            hearts={state.hearts}
-                            unlockedItems={state.unlockedItems}
-                            unlockedBackgrounds={state.unlockedBackgrounds}
-                            equipment={state.equipment}
-                            currentBackground={state.currentBackground}
-                            onUnlockItem={actions.unlockItem}
-                            onEquipItem={actions.equipItem}
-                            onUnlockBackground={actions.unlockBackground}
-                            onSetBackground={actions.setBackground}
-                            onClose={() => setShowWardrobe(false)}
-                        />
-                    </div>
+                    <DressUpStudio onClose={() => setShowWardrobe(false)} />
                 )}
             </AnimatePresence>
         </motion.div>
