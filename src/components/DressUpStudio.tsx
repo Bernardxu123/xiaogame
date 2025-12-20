@@ -1,40 +1,61 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { useGameState, ALL_ITEMS, type GameItem, type PlacedItem } from '../hooks/useGameState';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useGameState, ALL_ITEMS, ALL_BACKGROUNDS, type GameItem, type PlacedItem, UNLOCK_COSTS } from '../hooks/useGameState';
 import { Rabbit } from './Rabbit';
-import { Check, Trash2, Maximize, RotateCw } from 'lucide-react';
+import { Check, Trash2, Maximize, RotateCw, Image as ImageIcon, Sparkles, X } from 'lucide-react';
 
-// Assets
+// Assets: Backgrounds
+import bgRoom from '../assets/pixel/bg_room.jpg';
+import bgGarden from '../assets/pixel/bg_garden.png';
+import bgBeach from '../assets/pixel/bg_beach.png';
+import bgCandy from '../assets/pixel/bg_candy.png';
+import bgNight from '../assets/pixel/bg_night.png';
+import bgStudio from '../assets/pixel/bg_studio.jpg';
+
+// Assets: Items
 const ASSETS = import.meta.glob('../assets/pixel/*.png', { eager: true, as: 'url' });
+
+const BACKGROUND_IMAGES: Record<string, string> = {
+    room: bgRoom,
+    garden: bgGarden,
+    beach: bgBeach,
+    candy: bgCandy,
+    night: bgNight,
+    studio: bgStudio,
+};
 
 interface DressUpStudioProps {
     onClose: () => void;
 }
 
+type Tab = 'items' | 'backgrounds';
+
 export const DressUpStudio: React.FC<DressUpStudioProps> = ({ onClose }) => {
     const { state, actions } = useGameState();
 
-    // Local state for editing session
+    // Local state
     const [items, setItems] = useState<PlacedItem[]>(state.placedItems || []);
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<Tab>('items');
+
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Initial load
+    // Sync Item State
     useEffect(() => {
         setItems(state.placedItems || []);
     }, [state.placedItems]);
 
+    // Handlers
     const handleAddItem = (gameItem: GameItem) => {
         const newItem: PlacedItem = {
             uiId: `${gameItem.id}_${Date.now()}`,
             itemId: gameItem.id,
-            x: 50, // Center
-            y: 50, // Center
+            x: 50,
+            y: 50,
             scale: 1,
             rotation: 0,
             zIndex: items.length + 1
         };
-        // Add to end (top) and select
         setItems([...items, newItem]);
         setSelectedId(newItem.uiId);
     };
@@ -51,18 +72,16 @@ export const DressUpStudio: React.FC<DressUpStudioProps> = ({ onClose }) => {
     };
 
     const handleBringToFront = (uiId: string) => {
-        // Move item to end of array to render last (on top)
         setItems(prev => {
             const item = prev.find(i => i.uiId === uiId);
             if (!item) return prev;
-            const others = prev.filter(i => i.uiId !== uiId);
-            return [...others, item];
+            return [...prev.filter(i => i.uiId !== uiId), item];
         });
         setSelectedId(uiId);
     };
 
     const handleReset = () => {
-        if (window.confirm('确定要清空画布吗？')) {
+        if (window.confirm('确定要清空所有贴纸吗？(背景不会重置)')) {
             setItems([]);
             setSelectedId(null);
         }
@@ -73,121 +92,221 @@ export const DressUpStudio: React.FC<DressUpStudioProps> = ({ onClose }) => {
         onClose();
     };
 
+    const handleSetBackground = (bgId: string) => {
+        const bg = ALL_BACKGROUNDS.find(b => b.id === bgId);
+        if (!bg) return;
+
+        if (bg.unlocked || state.unlockedBackgrounds.includes(bgId)) {
+            actions.setBackground(bgId);
+        } else {
+            if (state.hearts >= UNLOCK_COSTS.background) {
+                if (window.confirm(`解锁 "${bg.name}" 需要 ${UNLOCK_COSTS.background} 爱心，确定解锁吗？`)) {
+                    actions.unlockBackground(bgId);
+                    actions.setBackground(bgId);
+                }
+            } else {
+                alert(`爱心不足！需要 ${UNLOCK_COSTS.background} ❤️`);
+            }
+        }
+    };
+
     const selectedItem = items.find(i => i.uiId === selectedId);
 
     return (
-        <div className="fixed inset-0 z-50 bg-amber-50 flex flex-col">
-            {/* Header */}
-            <div className="flex justify-between items-center p-4 bg-white/80 backdrop-blur shadow-sm z-50">
-                <button onClick={onClose} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200 text-slate-600 font-bold px-4">
-                    🔙 返回
+        <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed inset-0 z-50 bg-slate-100 flex flex-col font-sans"
+        >
+            {/* Header - Glassmorphism */}
+            <div className="flex justify-between items-center px-6 py-4 bg-white/70 backdrop-blur-md border-b border-white/50 z-50 shadow-sm">
+                <button onClick={onClose} className="p-2 px-4 bg-white/50 hover:bg-white rounded-full text-slate-600 font-bold transition-all shadow-sm flex items-center gap-2 hover:scale-105 active:scale-95">
+                    <X className="w-5 h-5" /> 取消
                 </button>
-                <h1 className="text-xl font-bold text-amber-600 flex items-center gap-2">
-                    🎨 自由创作工作室
-                </h1>
-                <div className="flex gap-2">
-                    <button onClick={handleReset} className="p-2 bg-red-100 text-red-500 rounded-full hover:bg-red-200" title="清空">
+
+                <div className="flex flex-col items-center">
+                    <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500 flex items-center gap-2">
+                        <Sparkles className="w-6 h-6 text-amber-500 fill-amber-500" />
+                        创意工坊
+                    </h1>
+                    <span className="text-xs text-slate-400 font-medium tracking-widest">CREATIVE STUDIO</span>
+                </div>
+
+                <div className="flex gap-3">
+                    <button onClick={handleReset} className="p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors" title="清空贴纸">
                         <Trash2 className="w-5 h-5" />
                     </button>
-                    <button onClick={handleSave} className="px-6 py-2 bg-green-500 text-white rounded-full font-bold shadow-lg hover:bg-green-600 flex items-center gap-2">
-                        <Check className="w-5 h-5" /> 保存
+                    <button onClick={handleSave} className="px-8 py-2.5 bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-full font-bold shadow-lg shadow-green-200 hover:shadow-green-300 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                        <Check className="w-5 h-5 stroke-[3]" /> 保存设计
                     </button>
                 </div>
             </div>
 
-            {/* Main Workspace */}
+            {/* Main Area */}
             <div className="flex-1 flex overflow-hidden">
 
-                {/* Canvas Area */}
+                {/* 1. Canvas Area */}
                 <div
                     ref={containerRef}
-                    className="flex-1 relative bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] overflow-hidden group"
+                    className="flex-1 relative overflow-hidden group shadow-inner"
                     onClick={() => setSelectedId(null)}
                 >
-                    {/* Center Reference Guide (Optional, visible on hover) */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-10 transition-opacity">
-                        <div className="w-full h-px bg-red-400 absolute" />
-                        <div className="h-full w-px bg-red-400 absolute" />
+                    {/* Dynamic Background Image */}
+                    <div className="absolute inset-0 z-0 transition-all duration-700">
+                        <img
+                            src={BACKGROUND_IMAGES[state.currentBackground] || BACKGROUND_IMAGES.room}
+                            alt="bg"
+                            className="w-full h-full object-cover"
+                        />
                     </div>
 
-                    {/* Fixed Base: Rabbit - Centered */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-80">
-                        {/* Scale down slightly to leave room for stickers */}
-                        <div className="w-80 h-80 relative">
-                            <Rabbit state="normal" equipment={{}} className="w-full h-full" />
+                    {/* Rabbit (Fixed Base) */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
+                        <div className="w-[80vh] h-[80vh] max-w-2xl max-h-2xl relative transition-transform duration-500">
+                            <Rabbit state="normal" equipment={{}} className="w-full h-full drop-shadow-2xl" />
                         </div>
                     </div>
 
                     {/* Placed Items Layer */}
-                    {items.map((item) => (
-                        <DraggableSticker
-                            key={item.uiId}
-                            item={item}
-                            isSelected={selectedId === item.uiId}
-                            containerRef={containerRef}
-                            onSelect={() => handleBringToFront(item.uiId)}
-                            onUpdate={(updates) => handleUpdateItem(item.uiId, updates)}
-                        />
-                    ))}
+                    <div className="absolute inset-0 z-10">
+                        {items.map((item) => (
+                            <DraggableSticker
+                                key={item.uiId}
+                                item={item}
+                                isSelected={selectedId === item.uiId}
+                                containerRef={containerRef}
+                                onSelect={() => handleBringToFront(item.uiId)}
+                                onUpdate={(updates) => handleUpdateItem(item.uiId, updates)}
+                            />
+                        ))}
+                    </div>
 
-                    {/* Controls Overlay for Selected Item */}
-                    {selectedItem && (
-                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur px-6 py-3 rounded-2xl shadow-xl flex items-center gap-6 border-2 border-amber-200 z-[100]" onClick={e => e.stopPropagation()}>
+                    {/* Controls Overlay (Floating Island) */}
+                    <AnimatePresence>
+                        {selectedItem && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 50, scale: 0.8 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-xl px-8 py-4 rounded-[2rem] shadow-2xl flex items-center gap-8 border border-white/60 z-50"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                {/* Scale */}
+                                <div className="flex flex-col items-center gap-2">
+                                    <Maximize className="w-5 h-5 text-slate-500" />
+                                    <input
+                                        type="range" min="0.5" max="3.0" step="0.1"
+                                        value={selectedItem.scale}
+                                        onChange={(e) => handleUpdateItem(selectedItem.uiId, { scale: parseFloat(e.target.value) })}
+                                        className="w-32 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                                    />
+                                </div>
 
-                            {/* Scale Control */}
-                            <div className="flex flex-col items-center gap-1">
-                                <Maximize className="w-4 h-4 text-slate-400" />
-                                <input
-                                    type="range" min="0.5" max="3.0" step="0.1"
-                                    value={selectedItem.scale}
-                                    onChange={(e) => handleUpdateItem(selectedItem.uiId, { scale: parseFloat(e.target.value) })}
-                                    className="w-24 accent-amber-500 cursor-pointer"
-                                />
-                            </div>
+                                <div className="w-px h-10 bg-slate-300/50" />
 
-                            {/* Rotation Control */}
-                            <div className="flex flex-col items-center gap-1">
-                                <RotateCw className="w-4 h-4 text-slate-400" />
-                                <input
-                                    type="range" min="-180" max="180" step="5"
-                                    value={selectedItem.rotation}
-                                    onChange={(e) => handleUpdateItem(selectedItem.uiId, { rotation: parseFloat(e.target.value) })}
-                                    className="w-24 accent-amber-500 cursor-pointer"
-                                />
-                            </div>
+                                {/* Rotation */}
+                                <div className="flex flex-col items-center gap-2">
+                                    <RotateCw className="w-5 h-5 text-slate-500" />
+                                    <input
+                                        type="range" min="-180" max="180" step="5"
+                                        value={selectedItem.rotation}
+                                        onChange={(e) => handleUpdateItem(selectedItem.uiId, { rotation: parseFloat(e.target.value) })}
+                                        className="w-32 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                                    />
+                                </div>
 
-                            {/* Delete */}
-                            <div className="h-8 w-px bg-slate-200 mx-2" />
-                            <button onClick={() => handleRemoveItem(selectedItem.uiId)} className="p-2 bg-red-100 rounded-full text-red-500 hover:bg-red-200 transition-colors">
-                                <Trash2 className="w-5 h-5" />
-                            </button>
-                        </div>
-                    )}
+                                <div className="w-px h-10 bg-slate-300/50" />
+
+                                {/* Delete */}
+                                <button
+                                    onClick={() => handleRemoveItem(selectedItem.uiId)}
+                                    className="w-12 h-12 flex items-center justify-center bg-red-100 rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm hover:shadow-red-200"
+                                >
+                                    <Trash2 className="w-6 h-6" />
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
-                {/* Sidebar: Item Library */}
-                <div className="w-24 sm:w-32 bg-white border-l border-slate-200 flex flex-col shadow-xl z-20">
-                    <div className="p-3 bg-amber-100 font-bold text-center text-amber-700 text-sm shadow-sm">
-                        素材库
+                {/* 2. Sidebar */}
+                <div className="w-80 bg-white/90 backdrop-blur-xl border-l border-white/50 flex flex-col shadow-2xl z-20">
+                    {/* Tabs */}
+                    <div className="flex p-2 gap-2 bg-slate-50 border-b border-slate-100">
+                        <button
+                            onClick={() => setActiveTab('items')}
+                            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'items' ? 'bg-white shadow-md text-slate-800' : 'text-slate-400 hover:bg-slate-100'}`}
+                        >
+                            <Sparkles className="w-4 h-4" /> 贴纸素材
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('backgrounds')}
+                            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'backgrounds' ? 'bg-white shadow-md text-slate-800' : 'text-slate-400 hover:bg-slate-100'}`}
+                        >
+                            <ImageIcon className="w-4 h-4" /> 场景切换
+                        </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-2 space-y-3 custom-scrollbar">
-                        {ALL_ITEMS.map((item) => (
-                            <div
-                                key={item.id}
-                                onClick={() => handleAddItem(item)}
-                                className="aspect-square bg-slate-50 rounded-xl border-2 border-slate-100 hover:border-amber-400 cursor-pointer flex flex-col items-center justify-center p-1 transition-all active:scale-95 group relative"
-                            >
-                                <ItemImage filename={item.image} />
-                                <span className="text-[10px] text-slate-500 truncate w-full text-center mt-1 group-hover:text-amber-600">{item.name}</span>
-                                <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-amber-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold shadow-sm">
-                                    +
-                                </div>
+
+                    {/* Content */}
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
+
+                        {/* Items Grid */}
+                        {activeTab === 'items' && (
+                            <div className="grid grid-cols-3 gap-3">
+                                {ALL_ITEMS.map((item) => (
+                                    <motion.div
+                                        key={item.id}
+                                        whileHover={{ scale: 1.05, y: -2 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => handleAddItem(item)}
+                                        className="aspect-square bg-white rounded-2xl shadow-sm border border-slate-100 hover:border-amber-400 hover:shadow-md cursor-pointer flex flex-col items-center justify-center p-2 group relative transition-all"
+                                    >
+                                        <div className="flex-1 w-full flex items-center justify-center relative">
+                                            <ItemImage filename={item.image} />
+                                        </div>
+                                        <span className="text-[10px] text-slate-400 font-medium mt-1 group-hover:text-amber-500 transition-colors">{item.name}</span>
+                                    </motion.div>
+                                ))}
                             </div>
-                        ))}
+                        )}
+
+                        {/* Backgrounds Grid */}
+                        {activeTab === 'backgrounds' && (
+                            <div className="space-y-3">
+                                {ALL_BACKGROUNDS.map((bg) => {
+                                    const isUnlocked = bg.unlocked || state.unlockedBackgrounds.includes(bg.id);
+                                    const isCurrent = state.currentBackground === bg.id;
+
+                                    return (
+                                        <motion.div
+                                            key={bg.id}
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => handleSetBackground(bg.id)}
+                                            className={`
+                                                relative h-32 rounded-2xl overflow-hidden cursor-pointer border-4 transition-all shadow-sm
+                                                ${isCurrent ? 'border-green-500 ring-2 ring-green-200' : 'border-white hover:border-blue-300'}
+                                            `}
+                                        >
+                                            <img src={BACKGROUND_IMAGES[bg.id]} alt={bg.name} className={`w-full h-full object-cover transition-all ${!isUnlocked ? 'grayscale blur-[1px]' : ''}`} />
+
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-3">
+                                                <div className="font-bold text-white text-sm flex items-center justify-between">
+                                                    <span>{bg.name}</span>
+                                                    {isCurrent && <Check className="w-4 h-4 text-green-400" />}
+                                                    {!isUnlocked && <span className="text-[10px] bg-black/50 px-2 py-0.5 rounded-full">🔒 {UNLOCK_COSTS.background}</span>}
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )
+                                })}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 
@@ -198,7 +317,6 @@ const DraggableSticker: React.FC<{
     onSelect: () => void;
     onUpdate: (updates: Partial<PlacedItem>) => void;
 }> = ({ item, isSelected, containerRef, onSelect, onUpdate }) => {
-    // Determine image source
     const path = `../assets/pixel/${item.itemId}${item.itemId.endsWith('.png') ? '' : '.png'}`;
     const src = ASSETS[path] || ASSETS[`../assets/pixel/${item.itemId}`];
 
@@ -206,18 +324,11 @@ const DraggableSticker: React.FC<{
         <motion.div
             drag
             dragMomentum={false}
-            dragElastic={0.1}
-            // Temporarily disable visual position while dragging to avoid fighting with state?
-            // Actually framer motion handles visual. We just need to update state on end.
-            // We use initial x/y in style to position it.
-            // When iterating, we want it to stay where it is.
-            // We need to map item.x% to pixel position for 'initial' or 'style'.
-            // But since parent is relative, we can just use left/top %.
+            dragElastic={0.05}
             style={{
                 position: 'absolute',
                 top: `${item.y}%`,
                 left: `${item.x}%`,
-                // Center the anchor point
                 x: '-50%',
                 y: '-50%',
                 touchAction: 'none'
@@ -225,38 +336,26 @@ const DraggableSticker: React.FC<{
             onDragStart={() => onSelect()}
             onDragEnd={(_event, info) => {
                 if (!containerRef.current) return;
-
                 const containerRect = containerRef.current.getBoundingClientRect();
-                const point = info.point; // Absolute page coordinates of pointer
-
-                // Calculate relative position within container
-                // We typically want the center of the element to be at the pointer, or keep the offset.
-                // Simplified: Update position based on where the drag ended relative to container.
+                const point = info.point;
                 const relativeX = point.x - containerRect.left;
                 const relativeY = point.y - containerRect.top;
-
-                // Convert to percentage
                 const percentX = (relativeX / containerRect.width) * 100;
                 const percentY = (relativeY / containerRect.height) * 100;
-
-                // Clamp to reasonable bounds (-20% to 120%) to allow partial off-screen
-                // const clampedX = Math.min(Math.max(percentX, -20), 120);
-                // const clampedY = Math.min(Math.max(percentY, -20), 120);
-
                 onUpdate({ x: percentX, y: percentY });
             }}
             onClick={(e) => {
                 e.stopPropagation();
                 onSelect();
             }}
-            className={`cursor-move pointer-events-auto ${isSelected ? 'z-[50]' : 'z-auto'}`}
+            className={`cursor-move pointer-events-auto ${isSelected ? 'z-[100]' : 'z-auto'}`}
             animate={{
                 scale: item.scale,
                 rotate: item.rotation,
-                filter: isSelected ? 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))' : 'drop-shadow(0 0 2px rgba(0,0,0,0.2))'
+                filter: isSelected ? 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
             }}
         >
-            <div className={`relative ${isSelected ? 'ring-2 ring-amber-400 border-dashed rounded-lg p-1' : ''}`}>
+            <div className={`relative transition-all duration-200 ${isSelected ? 'ring-4 ring-amber-400/50 ring-offset-2 rounded-xl' : ''}`}>
                 {src ? (
                     <img
                         src={src}
@@ -268,6 +367,9 @@ const DraggableSticker: React.FC<{
                     <div className="w-16 h-16 bg-red-200 rounded-full flex items-center justify-center">?</div>
                 )}
             </div>
+            {isSelected && (
+                <div className="absolute -top-3 -right-3 w-6 h-6 bg-amber-500 rounded-full border-2 border-white shadow-sm animate-pulse" />
+            )}
         </motion.div>
     );
 };
