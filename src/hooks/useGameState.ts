@@ -76,8 +76,10 @@ export const ALL_ITEMS: GameItem[] = assetMap
 
 export const ALL_BACKGROUNDS: Background[] = [
     { id: 'room', name: '温馨小屋', unlocked: true },
-    { id: 'garden', name: '花园', unlocked: false },
-    { id: 'beach', name: '海边', unlocked: false },
+    { id: 'garden', name: '阳光花园', unlocked: false },
+    { id: 'beach', name: '夏日海滩', unlocked: false },
+    { id: 'candy', name: '糖果乐园', unlocked: false },
+    { id: 'night', name: '梦幻星空', unlocked: false },
 ];
 
 export const UNLOCK_COSTS = {

@@ -1,28 +1,23 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import { Rabbit } from './Rabbit';
 import { CarrotGame } from './CarrotGame';
 import { Wardrobe } from './Wardrobe';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Pixel Art Backgrounds (CSS)
-const BACKGROUNDS: Record<string, string> = {
-    room: `
-    linear-gradient(to bottom, #ffe4e6 0%, #ffe4e6 70%, #fecdd3 70%, #fecdd3 100%),
-    radial-gradient(circle at 20% 20%, #fff0f5 10px, transparent 11px),
-    radial-gradient(circle at 80% 40%, #fff0f5 15px, transparent 16px)
-  `,
-    garden: `
-    linear-gradient(to bottom, #bae6fd 0%, #bae6fd 60%, #86efac 60%, #86efac 100%),
-    radial-gradient(circle at 10% 20%, white 20px, transparent 21px),
-    radial-gradient(circle at 15% 25%, white 15px, transparent 16px),
-    repeating-linear-gradient(45deg, #4ade80 0, #4ade80 10px, #22c55e 10px, #22c55e 20px)
-  `,
-    beach: `
-    linear-gradient(to bottom, #7dd3fc 0%, #7dd3fc 50%, #fde047 50%, #fde047 100%),
-    radial-gradient(circle at 90% 10%, #facc15 40px, transparent 41px),
-    repeating-linear-gradient(90deg, #60a5fa 0, #60a5fa 20px, #3b82f6 20px, #3b82f6 40px)
-  `,
+// Background Assets
+import bgRoom from '../assets/pixel/bg_room.jpg';
+import bgGarden from '../assets/pixel/bg_garden.png';
+import bgBeach from '../assets/pixel/bg_beach.png';
+import bgCandy from '../assets/pixel/bg_candy.png';
+import bgNight from '../assets/pixel/bg_night.png';
+
+const BACKGROUND_IMAGES: Record<string, string> = {
+    room: bgRoom,
+    garden: bgGarden,
+    beach: bgBeach,
+    candy: bgCandy,
+    night: bgNight,
 };
 
 // Emojis
@@ -120,20 +115,30 @@ export const GameContainerV3: React.FC = () => {
     // Progression XP Progress
     const xpProgress = useMemo(() => {
         const required = state.level * 100;
-        const currentXP = state.totalHeartsEarned % required; // Simplification
+        const currentXP = state.totalHeartsEarned % required;
         return (currentXP / required) * 100;
     }, [state.level, state.totalHeartsEarned]);
+
+    const currentBackground = state.currentBackground;
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="relative w-full h-screen overflow-hidden select-none font-sans"
-            style={{ background: BACKGROUNDS[state.currentBackground] }}
         >
+            {/* Background Image */}
+            <div className="absolute inset-0 z-0">
+                <img
+                    src={BACKGROUND_IMAGES[currentBackground] || BACKGROUND_IMAGES['room']}
+                    alt="Background"
+                    className="w-full h-full object-cover"
+                />
+            </div>
+
             {/* Day/Night Overlay */}
             <div
-                className="absolute inset-0 pointer-events-none z-20 transition-colors duration-[5000ms]"
+                className="absolute inset-0 pointer-events-none z-10 transition-colors duration-[5000ms]"
                 style={{ backgroundColor: dayNightOverlay }}
             />
 
@@ -180,10 +185,10 @@ export const GameContainerV3: React.FC = () => {
                                 animate={stat.warning ? { y: [0, -5, 0] } : {}}
                                 transition={stat.warning ? { repeat: Infinity, duration: 1 } : {}}
                                 className={`
-                  bg-white/80 backdrop-blur-md rounded-2xl px-3 py-2 shadow-lg border-2 
-                  ${stat.warning ? 'border-red-400 bg-red-50' : 'border-white/50'}
-                  flex flex-col items-center min-w-[60px]
-                `}
+                                    bg-white/80 backdrop-blur-md rounded-2xl px-3 py-2 shadow-lg border-2 
+                                    ${stat.warning ? 'border-red-400 bg-red-50' : 'border-white/50'}
+                                    flex flex-col items-center min-w-[60px]
+                                `}
                             >
                                 <div className="text-2xl">{stat.emoji[stat.value]}</div>
                                 {stat.warning && <div className="text-[10px] font-bold text-red-500">{stat.label}</div>}
@@ -210,7 +215,7 @@ export const GameContainerV3: React.FC = () => {
             </div>
 
             {/* 2. Main Character Area */}
-            <div className="absolute inset-0 flex items-center justify-center pt-10 z-10">
+            <div className="absolute inset-0 flex items-center justify-center pt-10 z-20">
                 {/* Gift Animation Effect */}
                 <AnimatePresence>
                     {giftEffect && (
@@ -305,7 +310,7 @@ export const GameContainerV3: React.FC = () => {
 
             {/* Night Stars (if night) */}
             {timeOfDay === 'night' && (
-                <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 pointer-events-none z-5">
                     <Starfield />
                 </div>
             )}
@@ -358,9 +363,9 @@ const MenuButton: React.FC<{
         transition={bounce ? { repeat: Infinity, duration: 0.8 } : {}}
         onClick={onClick}
         className={`
-      ${color} flex-1 aspect-square rounded-2xl shadow-lg border-b-4 border-black/10
-      flex flex-col items-center justify-center gap-1
-    `}
+            ${color} flex-1 aspect-square rounded-2xl shadow-lg border-b-4 border-black/10
+            flex flex-col items-center justify-center gap-1
+        `}
     >
         <span className="text-4xl filter drop-shadow-md">{emoji}</span>
         <span className="text-xs font-bold text-white tracking-wide">{label}</span>
@@ -387,4 +392,4 @@ const Starfield: React.FC = () => {
             ))}
         </div>
     );
-}
+};

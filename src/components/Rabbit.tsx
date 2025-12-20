@@ -4,12 +4,12 @@ import { motion } from 'framer-motion';
 // Base Rabbits
 import rabbitIdle from '../assets/pixel/rabbit_base_idle.png';
 import rabbitSad from '../assets/pixel/rabbit_sad.png';
-import rabbitEat1 from '../assets/pixel/rabbit-eat-1.png'; // Kept
-import rabbitEat2 from '../assets/pixel/rabbit-eat-2.png'; // Kept
-import rabbitSleep from '../assets/pixel/rabbit_sleeping.png'; // Recovered
+import rabbitEat1 from '../assets/pixel/rabbit-eat-1.png';
+import rabbitEat2 from '../assets/pixel/rabbit-eat-2.png';
+import rabbitSleep from '../assets/pixel/rabbit_sleeping.png';
 import effectZzz from '../assets/pixel/effect_zzz.png';
 
-// Dynamic Asset Loading
+// Dynamic Asset Loading for equipment
 const ASSETS = import.meta.glob('../assets/pixel/*.png', { eager: true, as: 'url' });
 
 import { cn } from '../lib/utils';
@@ -32,8 +32,7 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, equipment, className }) =
     // Helper to get asset URL by ID
     const getAssetUrl = (id?: string) => {
         if (!id) return null;
-        // Map ID to filename
-        const path = `../assets/pixel/final/${id}.png`;
+        const path = `../assets/pixel/${id}.png`;
         return ASSETS[path] || null;
     };
 
@@ -63,10 +62,9 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, equipment, className }) =
                         />
                     </div>
                 );
-            default:
-                let imageSrc = rabbitIdle;
-                if (state === 'happy') imageSrc = rabbitHappy;
-                if (state === 'sad') imageSrc = rabbitSad;
+            default: {
+                // Use base idle for both normal and happy; use sad for sad state
+                const imageSrc = state === 'sad' ? rabbitSad : rabbitIdle;
 
                 return (
                     <img
@@ -76,6 +74,7 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, equipment, className }) =
                         style={{ imageRendering: 'pixelated' }}
                     />
                 );
+            }
         }
     };
 
@@ -86,7 +85,7 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, equipment, className }) =
                 {renderBaseRabbit()}
             </div>
 
-            {/* 2. Clothing Layers - Only show if not sleeping to avoid weird overlay on lying down rabbit */}
+            {/* 2. Clothing Layers - Only show if not sleeping */}
             {state !== 'sleeping' && (
                 <>
                     {/* Body Layer */}
@@ -95,8 +94,8 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, equipment, className }) =
                             src={getAssetUrl(equipment.body)!}
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none translate-y-[2px]" // slight adjust
-                            style={{ imageRendering: 'pixelated', transform: 'scale(1.05)' }}
+                            className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none"
+                            style={{ imageRendering: 'pixelated', transform: 'scale(1.05) translateY(2px)' }}
                         />
                     )}
 
@@ -106,8 +105,8 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, equipment, className }) =
                             src={getAssetUrl(equipment.head)!}
                             initial={{ y: -20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            className="absolute inset-0 w-full h-full object-contain z-20 pointer-events-none -translate-y-[8px]" // slight lift for hats
-                            style={{ imageRendering: 'pixelated' }}
+                            className="absolute inset-0 w-full h-full object-contain z-20 pointer-events-none"
+                            style={{ imageRendering: 'pixelated', transform: 'translateY(-8px)' }}
                         />
                     )}
 
@@ -117,8 +116,8 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, equipment, className }) =
                             src={getAssetUrl(equipment.hand)!}
                             initial={{ x: 20, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
-                            className="absolute inset-0 w-full h-full object-contain z-20 pointer-events-none translate-x-[10px]" // slight offset
-                            style={{ imageRendering: 'pixelated' }}
+                            className="absolute inset-0 w-full h-full object-contain z-20 pointer-events-none"
+                            style={{ imageRendering: 'pixelated', transform: 'translateX(10px)' }}
                         />
                     )}
                 </>
