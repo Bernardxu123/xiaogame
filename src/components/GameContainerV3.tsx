@@ -2,8 +2,12 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import { Rabbit } from './Rabbit';
 import { CarrotGame } from './CarrotGame';
+import { MemoryGame } from './MemoryGame';
 import { DressUpStudio } from './DressUpStudio';
+import { FarmGame } from './FarmGame';
+import { PoopSystem } from './PoopSystem';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Gamepad2, BrainCircuit, Flower } from 'lucide-react';
 
 // Background Assets
 import bgRoom from '../assets/pixel/bg_room.jpg';
@@ -24,13 +28,15 @@ const BACKGROUND_IMAGES: Record<string, string> = {
 
 // Emojis
 const MOOD_EMOJI = ['😢', '😐', '😊'];
-const HUNGER_EMOJI = ['🍽️', '😋', '🥰'];
-const CLEAN_EMOJI = ['🛁', '🧼', '✨'];
 
 export const GameContainerV3: React.FC = () => {
     const { state, actions } = useGameState();
-    const [showGame, setShowGame] = useState(false);
+
+    // UI State
+    const [activeGame, setActiveGame] = useState<'carrot' | 'memory' | 'farm' | null>(null);
+    const [showGameMenu, setShowGameMenu] = useState(false);
     const [showWardrobe, setShowWardrobe] = useState(false);
+
     const [rabbitAnimation, setRabbitAnimation] = useState<'idle' | 'happy' | 'eating'>('idle');
     const [speechBubble, setSpeechBubble] = useState<string | null>(null);
     const [giftEffect, setGiftEffect] = useState<number | null>(null);
@@ -101,9 +107,11 @@ export const GameContainerV3: React.FC = () => {
     }, [actions, showBubble]);
 
     const handleGameComplete = useCallback((score: number) => {
-        actions.earnHearts(score * 2);
-        actions.feed();
-    }, [actions]);
+        actions.earnHearts(score);
+        showBubble(`游戏胜利！+${score} ❤️`);
+        setActiveGame(null); // Close game
+        // Optional: show victory effect here
+    }, [actions, showBubble]);
 
     // Derived state for rabbit image
     const getRabbitState = (): 'normal' | 'happy' | 'sad' | 'eating' | 'sleeping' => {
@@ -174,28 +182,48 @@ export const GameContainerV3: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Status Pills & Daily Gift */}
-                <div className="flex flex-col items-end gap-3">
-                    <div className="flex gap-2">
-                        {[
-                            { value: state.hungerLevel, emoji: HUNGER_EMOJI, label: '饿了', warning: state.hungerLevel === 0 },
-                            { value: state.cleanLevel, emoji: CLEAN_EMOJI, label: '脏了', warning: state.cleanLevel === 0 },
-                            { value: state.happyLevel, emoji: MOOD_EMOJI, label: '心情', warning: false },
-                        ].map((stat, i) => (
+                {/* Status Progress Bars */}
+                <div className="flex flex-col items-end gap-3 w-48">
+                    {/* Hunger Bar */}
+                    <div className="bg-white/80 backdrop-blur-md rounded-2xl p-2 shadow-lg border-2 border-white/50 w-full">
+                        <div className="flex justify-between text-xs font-bold text-slate-600 mb-1">
+                            <span>饱食度 {state.hungerLevel === 0 && '⚠️'}</span>
+                            <span>{state.hungerLevel}/2</span>
+                        </div>
+                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                             <motion.div
-                                key={i}
-                                animate={stat.warning ? { y: [0, -5, 0] } : {}}
-                                transition={stat.warning ? { repeat: Infinity, duration: 1 } : {}}
-                                className={`
-                                    bg-white/80 backdrop-blur-md rounded-2xl px-3 py-2 shadow-lg border-2 
-                                    ${stat.warning ? 'border-red-400 bg-red-50' : 'border-white/50'}
-                                    flex flex-col items-center min-w-[60px]
-                                `}
-                            >
-                                <div className="text-2xl">{stat.emoji[stat.value]}</div>
-                                {stat.warning && <div className="text-[10px] font-bold text-red-500">{stat.label}</div>}
-                            </motion.div>
-                        ))}
+                                animate={{ width: `${(state.hungerLevel / 2) * 100}%` }}
+                                className={`h-full ${state.hungerLevel === 0 ? 'bg-red-500' : 'bg-orange-400'}`}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Cleanliness Bar */}
+                    <div className="bg-white/80 backdrop-blur-md rounded-2xl p-2 shadow-lg border-2 border-white/50 w-full">
+                        <div className="flex justify-between text-xs font-bold text-slate-600 mb-1">
+                            <span>清洁度 {state.cleanLevel === 0 && '⚠️'}</span>
+                            <span>{state.cleanLevel}/2</span>
+                        </div>
+                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <motion.div
+                                animate={{ width: `${(state.cleanLevel / 2) * 100}%` }}
+                                className={`h-full ${state.cleanLevel === 0 ? 'bg-red-500' : 'bg-blue-400'}`}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Happy Bar (Optional, was mood) */}
+                    <div className="bg-white/80 backdrop-blur-md rounded-2xl p-2 shadow-lg border-2 border-white/50 w-full">
+                        <div className="flex justify-between text-xs font-bold text-slate-600 mb-1">
+                            <span>心情</span>
+                            <span>{MOOD_EMOJI[state.happyLevel]}</span>
+                        </div>
+                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <motion.div
+                                animate={{ width: `${(state.happyLevel / 2) * 100}%` }}
+                                className="h-full bg-pink-400"
+                            />
+                        </div>
                     </div>
 
                     {/* Daily Gift Icon */}
@@ -261,6 +289,15 @@ export const GameContainerV3: React.FC = () => {
                 </motion.div>
             </div>
 
+            {/* Poop System Layer - On top of main area */}
+            <PoopSystem
+                poops={state.poops}
+                onClean={(id) => {
+                    actions.scoopPoop(id);
+                    addClickEffect(window.innerWidth / 2, window.innerHeight - 150, '💩 铲走了 +2❤️');
+                }}
+            />
+
             {/* 3. Action Dock (Bottom) */}
             <div className="absolute bottom-8 left-0 right-0 z-40 px-6">
                 <div className="max-w-md mx-auto bg-white/40 backdrop-blur-xl rounded-[2rem] p-4 shadow-2xl border border-white/50 flex justify-around gap-2">
@@ -281,7 +318,7 @@ export const GameContainerV3: React.FC = () => {
                     <MenuButton
                         emoji="🎮"
                         label="玩耍"
-                        onClick={() => setShowGame(true)}
+                        onClick={() => setShowGameMenu(true)}
                         color="bg-green-400"
                     />
                     <MenuButton
@@ -311,22 +348,102 @@ export const GameContainerV3: React.FC = () => {
             </AnimatePresence>
 
             {/* Night Stars (if night) */}
-            {timeOfDay === 'night' && (
-                <div className="absolute inset-0 pointer-events-none z-5">
-                    <Starfield />
-                </div>
-            )}
+            {
+                timeOfDay === 'night' && (
+                    <div className="absolute inset-0 pointer-events-none z-5">
+                        <Starfield />
+                    </div>
+                )
+            }
 
             {/* Modals */}
             <AnimatePresence>
-                {showGame && (
+                {/* Game Selection Menu */}
+                {showGameMenu && (
                     <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6"
+                        onClick={() => setShowGameMenu(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
+                            className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <h2 className="text-2xl font-black text-slate-800 mb-6 text-center flex items-center justify-center gap-2">
+                                🎮 选择小游戏
+                            </h2>
+                            <div className="grid grid-cols-3 gap-4">
+                                <button
+                                    onClick={() => { setActiveGame('carrot'); setShowGameMenu(false); }}
+                                    className="aspect-square bg-orange-50 rounded-2xl border-4 border-orange-200 hover:border-orange-400 hover:bg-orange-100 transition-all flex flex-col items-center justify-center gap-2 group"
+                                >
+                                    <Gamepad2 className="w-10 h-10 text-orange-400 group-hover:scale-110 transition-transform" />
+                                    <span className="font-bold text-xs text-orange-600">接萝卜</span>
+                                </button>
+                                <button
+                                    onClick={() => { setActiveGame('memory'); setShowGameMenu(false); }}
+                                    className="aspect-square bg-blue-50 rounded-2xl border-4 border-blue-200 hover:border-blue-400 hover:bg-blue-100 transition-all flex flex-col items-center justify-center gap-2 group"
+                                >
+                                    <BrainCircuit className="w-10 h-10 text-blue-400 group-hover:scale-110 transition-transform" />
+                                    <span className="font-bold text-xs text-blue-600">记忆翻牌</span>
+                                </button>
+                                <button
+                                    onClick={() => { setActiveGame('farm'); setShowGameMenu(false); }}
+                                    className="aspect-square bg-green-50 rounded-2xl border-4 border-green-200 hover:border-green-400 hover:bg-green-100 transition-all flex flex-col items-center justify-center gap-2 group"
+                                >
+                                    <Flower className="w-10 h-10 text-green-400 group-hover:scale-110 transition-transform" />
+                                    <span className="font-bold text-xs text-green-600">开心农场</span>
+                                </button>
+                            </div>
+                            <button
+                                onClick={() => setShowGameMenu(false)}
+                                className="mt-6 w-full py-3 bg-slate-100 rounded-xl font-bold text-slate-500 hover:bg-slate-200"
+                            >
+                                关闭
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {/* Active Game */}
+                {activeGame === 'carrot' && (
+                    <motion.div
+                        key="carrot-game"
                         initial={{ y: '100%' }}
                         animate={{ y: 0 }}
                         exit={{ y: '100%' }}
                         className="fixed inset-0 z-50"
                     >
-                        <CarrotGame onComplete={handleGameComplete} onClose={() => setShowGame(false)} />
+                        <CarrotGame onComplete={handleGameComplete} onClose={() => setActiveGame(null)} />
+                    </motion.div>
+                )}
+
+                {activeGame === 'memory' && (
+                    <motion.div
+                        key="memory-game"
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        className="fixed inset-0 z-50"
+                    >
+                        <MemoryGame onComplete={handleGameComplete} onClose={() => setActiveGame(null)} />
+                    </motion.div>
+                )}
+
+                {activeGame === 'farm' && (
+                    <motion.div
+                        key="farm-game"
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        className="fixed inset-0 z-50"
+                    >
+                        <FarmGame onClose={() => setActiveGame(null)} />
                     </motion.div>
                 )}
 
@@ -334,7 +451,7 @@ export const GameContainerV3: React.FC = () => {
                     <DressUpStudio onClose={() => setShowWardrobe(false)} />
                 )}
             </AnimatePresence>
-        </motion.div>
+        </motion.div >
     );
 };
 

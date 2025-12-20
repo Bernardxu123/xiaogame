@@ -163,7 +163,7 @@ export const DressUpStudio: React.FC<DressUpStudioProps> = ({ onClose }) => {
 
                     {/* Rabbit (Fixed Base) */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
-                        <div className="w-[80vh] h-[80vh] max-w-2xl max-h-2xl relative transition-transform duration-500">
+                        <div className="w-[28vh] h-[28vh] max-w-2xl max-h-2xl relative transition-transform duration-500">
                             <Rabbit state="normal" equipment={{}} className="w-full h-full drop-shadow-2xl" />
                         </div>
                     </div>
@@ -196,7 +196,7 @@ export const DressUpStudio: React.FC<DressUpStudioProps> = ({ onClose }) => {
                                 <div className="flex flex-col items-center gap-2">
                                     <Maximize className="w-5 h-5 text-slate-500" />
                                     <input
-                                        type="range" min="0.5" max="3.0" step="0.1"
+                                        type="range" min="0.5" max="6.0" step="0.1"
                                         value={selectedItem.scale}
                                         onChange={(e) => handleUpdateItem(selectedItem.uiId, { scale: parseFloat(e.target.value) })}
                                         className="w-32 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
@@ -324,51 +324,74 @@ const DraggableSticker: React.FC<{
         <motion.div
             drag
             dragMomentum={false}
-            dragElastic={0.05}
+            dragElastic={0.15} // Increased slightly for a more responsive feel
             style={{
                 position: 'absolute',
                 top: `${item.y}%`,
                 left: `${item.x}%`,
                 x: '-50%',
                 y: '-50%',
+                zIndex: isSelected ? 100 : item.zIndex,
                 touchAction: 'none'
             }}
             onDragStart={() => onSelect()}
             onDragEnd={(_event, info) => {
                 if (!containerRef.current) return;
                 const containerRect = containerRef.current.getBoundingClientRect();
-                const point = info.point;
-                const relativeX = point.x - containerRect.left;
-                const relativeY = point.y - containerRect.top;
-                const percentX = (relativeX / containerRect.width) * 100;
-                const percentY = (relativeY / containerRect.height) * 100;
-                onUpdate({ x: percentX, y: percentY });
+
+                // Calculate percentage delta from offset to avoid "snapping" to cursor center
+                const deltaXPercent = (info.offset.x / containerRect.width) * 100;
+                const deltaYPercent = (info.offset.y / containerRect.height) * 100;
+
+                onUpdate({
+                    x: Math.max(0, Math.min(100, item.x + deltaXPercent)),
+                    y: Math.max(0, Math.min(100, item.y + deltaYPercent))
+                });
             }}
             onClick={(e) => {
                 e.stopPropagation();
                 onSelect();
             }}
-            className={`cursor-move pointer-events-auto ${isSelected ? 'z-[100]' : 'z-auto'}`}
+            className="cursor-grab active:cursor-grabbing pointer-events-auto"
             animate={{
                 scale: item.scale,
                 rotate: item.rotation,
-                filter: isSelected ? 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                filter: isSelected ? 'drop-shadow(0 15px 30px rgba(0,0,0,0.3))' : 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))'
+            }}
+            transition={{
+                type: 'spring',
+                stiffness: 300,
+                damping: 25,
+                mass: 0.5
             }}
         >
-            <div className={`relative transition-all duration-200 ${isSelected ? 'ring-4 ring-amber-400/50 ring-offset-2 rounded-xl' : ''}`}>
+            <div className={`relative transition-all duration-300 ${isSelected ? 'ring-4 ring-amber-400 ring-offset-4 rounded-2xl shadow-2xl scale-110' : ''}`}>
                 {src ? (
                     <img
                         src={src}
                         alt="sticker"
-                        className="w-24 h-24 object-contain pointer-events-none select-none"
+                        className="w-24 h-24 sm:w-32 sm:h-32 object-contain pointer-events-none select-none"
                         style={{ imageRendering: 'pixelated' }}
                     />
                 ) : (
-                    <div className="w-16 h-16 bg-red-200 rounded-full flex items-center justify-center">?</div>
+                    <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-400 font-mono">?</div>
+                )}
+
+                {isSelected && (
+                    <motion.div
+                        layoutId="selection-glow"
+                        className="absolute inset-0 bg-amber-400/10 rounded-2xl animate-pulse"
+                    />
                 )}
             </div>
             {isSelected && (
-                <div className="absolute -top-3 -right-3 w-6 h-6 bg-amber-500 rounded-full border-2 border-white shadow-sm animate-pulse" />
+                <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-4 -right-4 w-8 h-8 bg-amber-500 rounded-full border-4 border-white shadow-xl flex items-center justify-center"
+                >
+                    <Sparkles className="w-4 h-4 text-white" />
+                </motion.div>
             )}
         </motion.div>
     );

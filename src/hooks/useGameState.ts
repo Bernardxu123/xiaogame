@@ -37,6 +37,8 @@ export interface GameState {
     };
     // New Freeform System
     placedItems: PlacedItem[];
+    // Poop System
+    poops: { id: number; x: number; y: number }[];
 
     currentBackground: string;
     unlockedItems: string[]; // IDs of unlocked items
@@ -66,6 +68,7 @@ const DEFAULT_STATE: GameState = {
     totalHeartsEarned: 0,
     equipment: {},
     placedItems: [],
+    poops: [{ id: 1, x: 50, y: 25 }],
     currentBackground: 'room',
     unlockedItems: ['default'],
     unlockedBackgrounds: ['room'],
@@ -106,8 +109,13 @@ export function useGameState() {
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
-                // Merge with default ensuring new fields exist
-                return { ...DEFAULT_STATE, ...JSON.parse(saved) };
+                const parsed = JSON.parse(saved);
+                // Ensure poops exists and is an array. If empty, give it the default test poop for now.
+                const poops = (parsed.poops && Array.isArray(parsed.poops) && parsed.poops.length > 0)
+                    ? parsed.poops
+                    : DEFAULT_STATE.poops;
+
+                return { ...DEFAULT_STATE, ...parsed, poops };
             }
         } catch (e) {
             console.warn('Failed to load game state:', e);
@@ -128,21 +136,33 @@ export function useGameState() {
     useEffect(() => {
         const timer = setInterval(() => {
             setState(prev => {
-                const timeSinceLastInteraction = Date.now() - prev.lastInteraction;
-                if (timeSinceLastInteraction > 120000) {
-                    return {
-                        ...prev,
-                        hungerLevel: Math.max(0, prev.hungerLevel - 1),
-                        cleanLevel: Math.max(0, prev.cleanLevel - 1),
-                        happyLevel: prev.hungerLevel === 0 || prev.cleanLevel === 0
-                            ? Math.max(0, prev.happyLevel - 1)
-                            : prev.happyLevel,
-                        lastInteraction: Date.now(),
-                    };
+                const newHunger = Math.max(0, prev.hungerLevel - 1);
+                const newClean = Math.max(0, prev.cleanLevel - 1);
+
+                let newPoops = prev.poops;
+                // Aggressive spawning for testing: always spawn if cleanLevel < 2
+                if (newClean < 2 && prev.poops.length < 10) {
+                    newPoops = [
+                        ...prev.poops,
+                        {
+                            id: Date.now() + Math.random(),
+                            x: 10 + Math.random() * 80,
+                            y: 25 + Math.random() * 20 // Move up a bit (25-45% of bottom half)
+                        }
+                    ];
                 }
-                return prev;
+
+                return {
+                    ...prev,
+                    hungerLevel: newHunger,
+                    cleanLevel: newClean,
+                    poops: newPoops,
+                    happyLevel: newHunger === 0 || newClean === 0
+                        ? Math.max(0, prev.happyLevel - 1)
+                        : prev.happyLevel,
+                };
             });
-        }, 60000);
+        }, 45000); // 45 seconds for a balanced gameplay loop
         return () => clearInterval(timer);
     }, []);
 
@@ -179,7 +199,22 @@ export function useGameState() {
 
     const clean = useCallback(() => {
         updateProgression(5);
-        setState(prev => ({ ...prev, cleanLevel: 2, happyLevel: Math.min(2, prev.happyLevel + 1) }));
+        setState(prev => ({
+            ...prev,
+            cleanLevel: 2,
+            poops: [], // Cleaning removes all poops
+            happyLevel: Math.min(2, prev.happyLevel + 1)
+        }));
+    }, [updateProgression]);
+
+    const scoopPoop = useCallback((id: number) => {
+        updateProgression(2); // Small reward for scooping
+        setState(prev => ({
+            ...prev,
+            poops: prev.poops.filter(p => p.id !== id),
+            // Scooping improves cleanliness slightly? Maybe not full level up, but helps.
+            // For now, simple interaction.
+        }));
     }, [updateProgression]);
 
     const pet = useCallback(() => {
@@ -242,7 +277,7 @@ export function useGameState() {
     return {
         state,
         actions: {
-            feed, clean, pet, earnHearts, claimDailyGift,
+            feed, clean, pet, earnHearts, claimDailyGift, scoopPoop,
             unlockItem, equipItem,
             unlockBackground, setBackground,
             saveOutfit: (items: PlacedItem[]) => setState(prev => ({ ...prev, placedItems: items })),
