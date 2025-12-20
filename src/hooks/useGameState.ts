@@ -94,6 +94,7 @@ export const ALL_BACKGROUNDS: Background[] = [
     { id: 'beach', name: '夏日海滩', unlocked: false },
     { id: 'candy', name: '糖果乐园', unlocked: false },
     { id: 'night', name: '梦幻星空', unlocked: false },
+    { id: 'studio', name: '时尚工坊', unlocked: true },
 ];
 
 export const UNLOCK_COSTS = {

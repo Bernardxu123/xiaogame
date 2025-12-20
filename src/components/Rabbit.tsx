@@ -70,7 +70,7 @@ export const Rabbit: React.FC<RabbitProps> = ({ state, equipment, className }) =
                     <img
                         src={imageSrc}
                         alt="Rabbit Base"
-                        className={`w-full h-full object-contain drop-shadow-2xl ${state === 'happy' ? 'animate-bounce' : 'animate-pulse'}`}
+                        className={`w-full h-full object-contain drop-shadow-2xl`}
                         style={{ imageRendering: 'pixelated' }}
                     />
                 );

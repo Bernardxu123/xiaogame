@@ -11,6 +11,7 @@ import bgGarden from '../assets/pixel/bg_garden.png';
 import bgBeach from '../assets/pixel/bg_beach.png';
 import bgCandy from '../assets/pixel/bg_candy.png';
 import bgNight from '../assets/pixel/bg_night.png';
+import bgStudio from '../assets/pixel/bg_studio.jpg';
 
 const BACKGROUND_IMAGES: Record<string, string> = {
     room: bgRoom,
@@ -18,6 +19,7 @@ const BACKGROUND_IMAGES: Record<string, string> = {
     beach: bgBeach,
     candy: bgCandy,
     night: bgNight,
+    studio: bgStudio,
 };
 
 // Emojis
